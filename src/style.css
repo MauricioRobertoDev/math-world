@@ -7,8 +7,8 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-text-size-adjust: 100%;
+    background-color: #111827;
 }
-
 
 body {
     margin: 0;
@@ -17,24 +17,16 @@ body {
     position: relative;
 }
 
-.cartesian-plan {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-}
-
-.app {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-}
-
-#info {
+.cartesian {
     position: fixed;
     top: 0px;
     left: 0px;
-    padding: 8px;
-    background-color: #292d3e;
-    color: white;
-    font-size: 16px;
+    z-index: 2;
+}
+
+.app {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    z-index: 3;
 }
