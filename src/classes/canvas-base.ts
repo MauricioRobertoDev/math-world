@@ -14,8 +14,15 @@ export default class CanvasBase {
     private cols = 10;
     private mouse = new Vector2D();
 
+    public negativeX = 0;
+    public positiveX = 0;
+    public negativeY = 0;
+    public positiveY = 0;
+
+    public origin = new Vector2D(0, 0);
+
     // camera
-    private cameraOffset = new Vector2D(this.width / 2, this.height / 2); // meio da tela
+    private cameraOffset = new Vector2D(this.width / 2, this.height / 2);
     private cameraZoom = 100;
     private max_zoom = 500;
     private min_zoom = 50;
@@ -23,6 +30,15 @@ export default class CanvasBase {
     private isDragging = false;
     public dragStart = new Vector2D();
     private scale_factor = 10;
+
+    private draw_grid = true;
+    private is_draggable = true;
+    private is_zoomable = true;
+
+    private edgeMaxX = this.getOrigin().getX() + this.positiveX * this.getGridSize();
+    private edgeMinX = this.getOrigin().getX() - this.negativeX * this.getGridSize();
+    private edgeMaxY = this.getOrigin().getY() + this.negativeY * this.getGridSize();
+    private edgeMinY = this.getOrigin().getY() - this.positiveY * this.getGridSize();
 
     /**
      * CANVAS HTML ELEMENT AND CONTEXT
@@ -138,6 +154,10 @@ export default class CanvasBase {
         return this;
     }
 
+    public getOrigin(): Vector2D {
+        return this.origin;
+    }
+
     /**
      * ############################################
      * #                 ZOOMABLE                 #
@@ -189,11 +209,21 @@ export default class CanvasBase {
         return this;
     }
 
-    public zoomAt(amount: number, point: Vector2D) {
+    public setCameraZoom(amount: number, point: Vector2D | null = null): this {
+        this.zoomAt(amount, point ? point : this.cameraOffset);
+        return this;
+    }
+
+    public setCameraOffsetToCenter(): this {
+        this.cameraOffset.setX(this.width / 2).setY(this.height / 2);
+        return this;
+    }
+
+    private zoomAt(amount: number, point: Vector2D) {
         this.zoomAtWithDecimal(amount / 100, point);
     }
 
-    public zoomAtWithDecimal(decimalAmount: number, point: Vector2D) {
+    private zoomAtWithDecimal(decimalAmount: number, point: Vector2D) {
         if (!this.isDragging) {
             const newZoom = this.getCameraZoomInDecimal() * decimalAmount;
 
@@ -212,30 +242,38 @@ export default class CanvasBase {
      */
 
     private onPointerDown(e: MouseEvent) {
-        this.isDragging = true;
-        this.dragStart.setX(e.x);
-        this.dragStart.setY(e.y);
+        if (this.is_draggable) {
+            this.isDragging = true;
+            this.dragStart.setX(e.x);
+            this.dragStart.setY(e.y);
+        }
     }
 
     private onPointerUp() {
-        this.isDragging = false;
+        if (this.is_draggable) {
+            this.isDragging = false;
+        }
     }
 
     private onPointerMove(e: MouseEvent) {
-        if (this.isDragging) {
-            this.getCameraOffset().setX(this.getCameraOffset().getX() + e.clientX - this.dragStart.getX());
-            this.getCameraOffset().setY(this.getCameraOffset().getY() + e.clientY - this.dragStart.getY());
+        if (this.is_draggable) {
+            if (this.isDragging) {
+                this.getCameraOffset().setX(this.getCameraOffset().getX() + e.clientX - this.dragStart.getX());
+                this.getCameraOffset().setY(this.getCameraOffset().getY() + e.clientY - this.dragStart.getY());
 
-            this.dragStart.setX(e.clientX);
-            this.dragStart.setY(e.clientY);
+                this.dragStart.setX(e.clientX);
+                this.dragStart.setY(e.clientY);
+            }
         }
     }
 
     private adjustZoomAtMousePoint(e: WheelEvent) {
-        e.preventDefault();
-        const scale_factor = this.scale_factor / 100 + 1;
-        if (-e.deltaY > 0) this.zoomAtWithDecimal(scale_factor, this.getMousePosition());
-        else this.zoomAtWithDecimal(1 / scale_factor, this.getMousePosition());
+        if (this.is_zoomable) {
+            e.preventDefault();
+            const scale_factor = this.scale_factor / 100 + 1; // 10 / 100 + 1 = 1.1 = 110%
+            if (-e.deltaY > 0) this.zoomAtWithDecimal(scale_factor, this.getMousePosition());
+            else this.zoomAtWithDecimal(1 / scale_factor, this.getMousePosition());
+        }
     }
 
     protected setupEvents(): void {
@@ -244,5 +282,203 @@ export default class CanvasBase {
         this.getCanvas().addEventListener("mousemove", (e) => this.setMousePosition(e));
         this.getCanvas().addEventListener("mouseup", () => this.onPointerUp());
         this.getCanvas().addEventListener("wheel", (e) => this.adjustZoomAtMousePoint(e));
+    }
+
+    public moveCameraToCartesianXY(x: number, y: number): this {
+        //  this.getCameraOffset().setX();
+        //  this.getCameraOffset().setY();
+        return this;
+    }
+
+    /**
+     * GRID
+     */
+    public drawGrid(): boolean {
+        return this.draw_grid;
+    }
+
+    public setDrawGrid(draw: boolean) {
+        this.draw_grid = draw;
+    }
+
+    /**
+     * LIMITS
+     * ! problema conhecido: desta maneira não será possivel setar os ambos os valores como negativo por exemplo -100 e -50
+     */
+    public setNegativeX(x: number): this {
+        this.negativeX = Math.round(Math.abs(x));
+        this.edgeMinX = this.getOrigin().getX() - this.negativeX * this.getGridSize();
+        return this;
+    }
+
+    public getNegativeX(): number {
+        return this.negativeX;
+    }
+
+    public setPositiveX(x: number): this {
+        this.positiveX = Math.round(Math.abs(x));
+        this.edgeMaxX = this.getOrigin().getX() + this.positiveX * this.getGridSize();
+        return this;
+    }
+
+    public getPositiveX(): number {
+        return this.positiveX;
+    }
+
+    public setNegativeY(y: number): this {
+        this.negativeY = Math.round(Math.abs(y));
+        this.edgeMaxY = this.getOrigin().getY() + this.negativeY * this.getGridSize();
+        return this;
+    }
+
+    public getNegativeY(): number {
+        return this.negativeY;
+    }
+
+    public setPositiveY(y: number): this {
+        this.positiveY = Math.round(Math.abs(y));
+        this.edgeMinY = this.getOrigin().getY() - this.positiveY * this.getGridSize();
+        return this;
+    }
+
+    public getPositiveY(): number {
+        return this.positiveY;
+    }
+
+    public setLimitsFullScreen(): this {
+        let maxXLines = Math.floor(this.width / this.grid_size);
+        let maxYLines = Math.floor(this.height / this.grid_size);
+
+        maxXLines = maxXLines % 2 === 0 ? maxXLines : maxXLines + 1;
+        maxYLines = maxYLines % 2 === 0 ? maxYLines : maxYLines + 1;
+
+        this.setNegativeX(maxXLines / 2).setPositiveX(maxXLines / 2);
+        this.setNegativeY(maxYLines / 2).setPositiveY(maxYLines / 2);
+
+        return this;
+    }
+
+    public setIsDraggable(is: boolean): this {
+        this.is_draggable = is;
+        return this;
+    }
+
+    public isDraggable(): boolean {
+        return this.is_draggable;
+    }
+
+    public setIsZoomable(is: boolean): this {
+        this.is_zoomable = is;
+        return this;
+    }
+
+    public isZoomable(): boolean {
+        return this.is_zoomable;
+    }
+
+    protected drawCartesianPlan() {
+        // número de linhas horizontais e verticais que o espaço terá
+        const numLinesHorizontal = this.negativeY + this.positiveY;
+        const numLinesVertical = this.negativeX + this.positiveX;
+
+        const ctx = this.getContext();
+
+        if (this.drawGrid()) {
+            for (let i = 0; i <= numLinesHorizontal; i++) {
+                ctx.beginPath();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+
+                if (i == numLinesHorizontal) {
+                    ctx.moveTo(this.edgeMinX, this.edgeMinY + this.getGridSize() * i);
+                    ctx.lineTo(this.edgeMaxX, this.edgeMinY + this.getGridSize() * i);
+                } else {
+                    ctx.moveTo(this.edgeMinX, this.edgeMinY + this.getGridSize() * i + 0.5);
+                    ctx.lineTo(this.edgeMaxX, this.edgeMinY + this.getGridSize() * i + 0.5);
+                }
+                ctx.stroke();
+            }
+
+            for (let i = 0; i <= numLinesVertical; i++) {
+                ctx.beginPath();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+
+                if (i == numLinesVertical) {
+                    ctx.moveTo(this.edgeMinX + this.getGridSize() * i, this.edgeMinY);
+                    ctx.lineTo(this.edgeMinX + this.getGridSize() * i, this.edgeMaxY);
+                } else {
+                    ctx.moveTo(this.edgeMinX + this.getGridSize() * i + 0.5, this.edgeMinY);
+                    ctx.lineTo(this.edgeMinX + this.getGridSize() * i + 0.5, this.edgeMaxY);
+                }
+
+                ctx.stroke();
+            }
+        }
+
+        // desenho das linhas que cruzam o x0, y0
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+        ctx.moveTo(this.edgeMinX, this.getOrigin().getY());
+        ctx.lineTo(this.edgeMaxX, this.getOrigin().getY());
+        ctx.moveTo(this.getOrigin().getX(), this.edgeMinY);
+        ctx.lineTo(this.getOrigin().getX(), this.edgeMaxY);
+        ctx.stroke();
+
+        let index = 0;
+
+        // Marcas de tiques ao longo do eixo X
+        for (let i = -this.negativeX; i <= this.positiveX; i++) {
+            ctx.beginPath();
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+
+            // Desenhe uma marca de 6px de comprimento (-3 a 3)
+            ctx.moveTo(this.edgeMinX + this.getGridSize() * index + 0.5, this.getOrigin().getY() - 3);
+            ctx.lineTo(this.edgeMinX + this.getGridSize() * index + 0.5, this.getOrigin().getY() + 3);
+            ctx.stroke();
+
+            // Valor do texto naquele ponto
+            if (i != 0) {
+                ctx.font = "16px Arial";
+                ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+                ctx.textAlign = "start";
+                ctx.fillText(i.toString(), this.edgeMinX + this.getGridSize() * index - 2, this.getOrigin().getY() + 15);
+            }
+
+            index++;
+        }
+
+        index = 0;
+        // Marcas de tiques ao longo do eixo y
+        for (let i = this.positiveY; i >= -this.negativeY; i--) {
+            ctx.beginPath();
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+
+            // Desenhe uma marca de 6px de comprimento (-3 a 3)
+            ctx.moveTo(this.getOrigin().getX() - 3, this.edgeMinY + this.getGridSize() * index + 0.5);
+            ctx.lineTo(this.getOrigin().getX() + 3, this.edgeMinY + this.getGridSize() * index + 0.5);
+            ctx.stroke();
+
+            // Valor do texto naquele ponto
+            if (i != 0) {
+                ctx.font = "16px Arial";
+                ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+                ctx.textAlign = "start";
+                ctx.fillText(i.toString(), this.getOrigin().getX() + 15, this.edgeMinY + this.getGridSize() * index + 3);
+            }
+
+            index++;
+        }
+
+        // bolinha marcando o ponto 0,0
+        ctx.save();
+        ctx.beginPath();
+        ctx.fillStyle = "white";
+        ctx.arc(0, 0, 5, 0, 260);
+        ctx.fill();
+        ctx.restore();
     }
 }
