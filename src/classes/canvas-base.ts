@@ -1,3 +1,4 @@
+import Paint from "./paint";
 import Vector2D from "./vector-2d";
 
 export default class CanvasBase {
@@ -13,32 +14,30 @@ export default class CanvasBase {
     private rows = 10;
     private cols = 10;
     private mouse = new Vector2D();
-
-    public negativeX = 0;
-    public positiveX = 0;
-    public negativeY = 0;
-    public positiveY = 0;
-
-    public origin = new Vector2D(0, 0);
-
-    // camera
+    private negativeX = 0;
+    private positiveX = 0;
+    private negativeY = 0;
+    private positiveY = 0;
+    private origin = new Vector2D(0, 0);
     private cameraOffset = new Vector2D(this.width / 2, this.height / 2);
     private cameraZoom = 100;
     private max_zoom = 500;
     private min_zoom = 50;
-
     private isDragging = false;
-    public dragStart = new Vector2D();
+    private dragStart = new Vector2D();
     private scale_factor = 10;
-
     private draw_grid = true;
     private is_draggable = true;
     private is_zoomable = true;
-
     private edgeMaxX = this.getOrigin().getX() + this.positiveX * this.getGridSize();
     private edgeMinX = this.getOrigin().getX() - this.negativeX * this.getGridSize();
     private edgeMaxY = this.getOrigin().getY() + this.negativeY * this.getGridSize();
     private edgeMinY = this.getOrigin().getY() - this.positiveY * this.getGridSize();
+    private paint = new Paint(this);
+
+    public getPaint(): Paint {
+        return this.paint;
+    }
 
     /**
      * CANVAS HTML ELEMENT AND CONTEXT
@@ -125,6 +124,20 @@ export default class CanvasBase {
         return this.mouse;
     }
 
+    public getMousePositionInCartesian(): Vector2D {
+        const mouse = new Vector2D();
+        mouse.setX((this.mouse.getX() - this.getCameraOffset().getX()) / this.getCameraZoomInDecimal() / this.getGridSize());
+        mouse.setY((this.mouse.getY() - this.getCameraOffset().getY()) / this.getCameraZoomInDecimal() / this.getGridSize());
+        return mouse;
+    }
+
+    public getMousePositionInWord(): Vector2D {
+        const mouse = new Vector2D();
+        mouse.setX((this.mouse.getX() - this.getCameraOffset().getX()) / this.getCameraZoomInDecimal());
+        mouse.setY((this.mouse.getY() - this.getCameraOffset().getY()) / this.getCameraZoomInDecimal());
+        return mouse;
+    }
+
     protected setMousePosition(event: MouseEvent): void {
         this.mouse.setX(event.x).setY(event.y);
     }
@@ -175,7 +188,7 @@ export default class CanvasBase {
         return parseInt(this.cameraZoom.toString());
     }
 
-    protected getCameraZoomInDecimal(): number {
+    public getCameraZoomInDecimal(): number {
         return this.cameraZoom / 100;
     }
 
