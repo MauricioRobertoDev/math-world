@@ -127,7 +127,7 @@ export default class CanvasBase {
     public getMousePositionInCartesian(): Vector2D {
         const mouse = new Vector2D();
         mouse.setX((this.mouse.getX() - this.getCameraOffset().getX()) / this.getCameraZoomInDecimal() / this.getGridSize());
-        mouse.setY((this.mouse.getY() - this.getCameraOffset().getY()) / this.getCameraZoomInDecimal() / this.getGridSize());
+        mouse.setY(-(this.mouse.getY() - this.getCameraOffset().getY()) / this.getCameraZoomInDecimal() / this.getGridSize());
         return mouse;
     }
 

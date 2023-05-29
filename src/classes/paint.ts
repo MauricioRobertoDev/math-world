@@ -119,4 +119,19 @@ export default class Paint {
         ctx.fillText(textMouseInWorldPosition, point.getX(), point.getY() - 16);
         ctx.closePath();
     }
+
+    public drawLine(A: Vector2D, B: Vector2D, color = "white") {
+        A = this.getPointByDrawMode(A);
+        B = this.getPointByDrawMode(B);
+        const ctx = this.canvas.getContext();
+        ctx.save();
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = color;
+        ctx.moveTo(A.getX(), A.getY());
+        ctx.lineTo(B.getX(), B.getY());
+        ctx.stroke();
+        ctx.closePath();
+        ctx.restore();
+    }
 }

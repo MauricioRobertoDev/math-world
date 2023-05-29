@@ -22,8 +22,12 @@ canvas.loop = (() => {
         // paint.drawPoint(W, "W");
 
         paint.cartesian();
-        const C = new Vector2D(5, 5);
-        paint.drawPoint(C, "C");
+
+        const C = canvas.getMousePositionInCartesian();
+        C.log();
+
+        paint.drawLine(new Vector2D(), C);
+        // paint.drawPoint(C, "C");
 
         paint.screen();
         paint.drawMouseDebug();
