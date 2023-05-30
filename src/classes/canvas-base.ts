@@ -4,39 +4,40 @@ import Vector2D from "./vector-2d";
 type MouseDebugMode = "off" | "screen" | "point";
 
 export default class CanvasBase {
-    private running = false;
-    private canvas = document.getElementById("app") as HTMLCanvasElement;
-    private context = this.canvas.getContext("2d") as CanvasRenderingContext2D;
-    private cartesianCanvas = document.getElementById("cartesian") as HTMLCanvasElement;
-    private cartesianContext = this.cartesianCanvas.getContext("2d") as CanvasRenderingContext2D;
-    private width = (this.canvas.width = this.cartesianCanvas.width = window.innerWidth);
-    private height = (this.canvas.height = this.cartesianCanvas.height = window.innerHeight);
-    private background_color = "#292D3E";
-    private grid_size = 32;
-    private rows = 10;
-    private cols = 10;
-    private mouse = new Vector2D();
-    private negativeX = 0;
-    private positiveX = 0;
-    private negativeY = 0;
-    private positiveY = 0;
-    private origin = new Vector2D(0, 0);
-    private cameraOffset = new Vector2D(this.width / 2, this.height / 2);
-    private cameraZoom = 100;
-    private max_zoom = 500;
-    private min_zoom = 50;
-    private isDragging = false;
-    private dragStart = new Vector2D();
-    private scale_factor = 10;
-    private draw_grid = true;
-    private is_draggable = true;
-    private is_zoomable = true;
-    private edgeMaxX = this.getOrigin().getX() + this.positiveX * this.getGridSize();
-    private edgeMinX = this.getOrigin().getX() - this.negativeX * this.getGridSize();
-    private edgeMaxY = this.getOrigin().getY() + this.negativeY * this.getGridSize();
-    private edgeMinY = this.getOrigin().getY() - this.positiveY * this.getGridSize();
-    private paint = new Paint(this);
-    private mouse_debug_mode: MouseDebugMode = "off";
+    protected draw_info = true;
+    protected running = false;
+    protected canvas = document.getElementById("app") as HTMLCanvasElement;
+    protected context = this.canvas.getContext("2d") as CanvasRenderingContext2D;
+    protected cartesianCanvas = document.getElementById("cartesian") as HTMLCanvasElement;
+    protected cartesianContext = this.cartesianCanvas.getContext("2d") as CanvasRenderingContext2D;
+    protected width = (this.canvas.width = this.cartesianCanvas.width = window.innerWidth);
+    protected height = (this.canvas.height = this.cartesianCanvas.height = window.innerHeight);
+    protected background_color = "#292D3E";
+    protected grid_size = 32;
+    protected rows = 10;
+    protected cols = 10;
+    protected mouse = new Vector2D();
+    protected negativeX = 0;
+    protected positiveX = 0;
+    protected negativeY = 0;
+    protected positiveY = 0;
+    protected origin = new Vector2D(0, 0);
+    protected cameraOffset = new Vector2D(this.width / 2, this.height / 2);
+    protected cameraZoom = 100;
+    protected max_zoom = 500;
+    protected min_zoom = 50;
+    protected isDragging = false;
+    protected dragStart = new Vector2D();
+    protected scale_factor = 10;
+    protected draw_grid = true;
+    protected is_draggable = true;
+    protected is_zoomable = true;
+    protected edgeMaxX = this.getOrigin().getX() + this.positiveX * this.getGridSize();
+    protected edgeMinX = this.getOrigin().getX() - this.negativeX * this.getGridSize();
+    protected edgeMaxY = this.getOrigin().getY() + this.negativeY * this.getGridSize();
+    protected edgeMinY = this.getOrigin().getY() - this.positiveY * this.getGridSize();
+    protected paint = new Paint(this);
+    protected mouse_debug_mode: MouseDebugMode = "off";
     protected prevFrameTime = performance.now();
     protected fpsInterval = 0;
     protected time = 0;
@@ -46,6 +47,11 @@ export default class CanvasBase {
 
     public getPaint(): Paint {
         return this.paint;
+    }
+
+    public setDrawInfo(draw: boolean) {
+        this.draw_info = draw;
+        return this;
     }
 
     public setMouseDebugMode(mode: MouseDebugMode): this {
@@ -333,12 +339,6 @@ export default class CanvasBase {
         this.getCanvas().addEventListener("wheel", (e) => this.adjustZoomAtMousePoint(e));
     }
 
-    public moveCameraToCartesianXY(x: number, y: number): this {
-        //  this.getCameraOffset().setX();
-        //  this.getCameraOffset().setY();
-        return this;
-    }
-
     /**
      * GRID
      */
@@ -562,6 +562,7 @@ export default class CanvasBase {
     }
 
     protected drawInfo() {
+        if (!this.draw_info) return;
         const ctx = this.getContext();
 
         ctx.save();

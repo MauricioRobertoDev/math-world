@@ -52,9 +52,9 @@ export default class Canvas extends CanvasBase {
 
             this.drawMouseDebug();
 
-            if (currentFrameTime > 0) this.fps = Math.round(1000 / elapsed);
-
             this.drawInfo();
+
+            if (currentFrameTime > 0) this.fps = Math.round(1000 / elapsed);
 
             this.prevFrameTime = currentFrameTime;
         }

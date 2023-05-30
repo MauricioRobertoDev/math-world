@@ -65,4 +65,5 @@ function setupCanvas(canvas: Canvas) {
     canvas.setNegativeY(1);
     canvas.setIsZoomable(false);
     canvas.setMouseDebugMode("point");
+    canvas.setDrawInfo(true);
 }
