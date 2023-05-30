@@ -34,7 +34,7 @@ export default class Paint {
         ctx.beginPath();
         ctx.strokeStyle = color;
         ctx.lineWidth = width;
-        ctx.arc(point.getX(), point.getY(), radius, startAngle, endAngle, clockwise);
+        ctx.arc(point.getX(), point.getY(), this.draw_mode === "cartesian" ? radius * this.canvas.getGridSize() : radius, startAngle, endAngle, clockwise);
         ctx.stroke();
         // ctx.restore();
     }
@@ -99,17 +99,19 @@ export default class Paint {
         const mouse = this.canvas.getMousePosition();
         const mouseInWorld = this.canvas.getMousePositionInWord();
         const mouseInCartesian = this.canvas.getMousePositionInCartesian();
-        const point = this.getPointByDrawMode(mouse);
+        const point = mouse;
 
-        const textMousePosition = "(" + mouse.getX() + ", " + mouse.getY() + ")";
-        const textMouseInWorldPosition = "(" + mouseInWorld.getX().toFixed(2) + ", " + mouseInWorld.getY().toFixed(2) + ")";
-        const textMouseInCartesianPosition = "(" + mouseInCartesian.getX().toFixed(2) + ", " + mouseInCartesian.getY().toFixed(2) + ")";
+        const textMousePosition = "Screen (" + mouse.getX() + ", " + mouse.getY() + ")";
+        const textMouseInWorldPosition = "World (" + mouseInWorld.getX().toFixed(2) + ", " + mouseInWorld.getY().toFixed(2) + ")";
+        const textMouseInCartesianPosition = "Cartesian (" + mouseInCartesian.getX().toFixed(2) + ", " + mouseInCartesian.getY().toFixed(2) + ")";
 
+        ctx.save();
+        ctx.resetTransform();
         ctx.beginPath();
         ctx.strokeStyle = this.canvas.getBackgroundColor();
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.font = "bold 14px arial";
+        ctx.font = "bold 16px arial";
         ctx.lineWidth = 7;
         ctx.fillStyle = "#5eead4";
         ctx.fillText(textMousePosition, point.getX(), point.getY() - 48);
@@ -118,6 +120,7 @@ export default class Paint {
         ctx.fillStyle = "#f0abfc";
         ctx.fillText(textMouseInWorldPosition, point.getX(), point.getY() - 16);
         ctx.closePath();
+        ctx.restore();
     }
 
     public drawLine(A: Vector2D, B: Vector2D, color = "white") {
