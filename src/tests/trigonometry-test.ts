@@ -53,8 +53,6 @@ export default function trigonometryTest(canvas: Canvas): (canvas: Canvas) => vo
         paint.drawText("tan = sin/cos = " + tan, new Vector2D(20, 80), "#f97316");
         paint.drawText("θ = " + theta + " (" + angleOfMouseDegrees + "°)", new Vector2D(20, 100));
         paint.drawText("X: " + B.getX() + "    " + "Y: " + B.getY(), new Vector2D(20, 120));
-
-        paint.drawMouseDebug();
     };
 }
 
@@ -66,4 +64,5 @@ function setupCanvas(canvas: Canvas) {
     canvas.setNegativeX(1);
     canvas.setNegativeY(1);
     canvas.setIsZoomable(false);
+    canvas.setMouseDebugMode("point");
 }

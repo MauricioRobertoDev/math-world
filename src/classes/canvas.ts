@@ -11,6 +11,7 @@ export default class Canvas extends CanvasBase {
     public start(): void {
         this.setRunning(true);
         this.setupEvents();
+        this.fpsInterval = this.max_fps == null ? 1 : 1000 / this.max_fps;
         this.update();
     }
 
@@ -23,20 +24,39 @@ export default class Canvas extends CanvasBase {
     }
 
     private update(timestamp = 0): void {
+        this.canvas_time = timestamp;
+
         if (this.isRunning()) requestAnimationFrame(this.update.bind(this));
 
-        const ctx = this.getContext();
+        const currentFrameTime = performance.now();
+        const elapsed = currentFrameTime - this.prevFrameTime;
 
-        ctx.resetTransform();
+        if (elapsed > this.fpsInterval) {
+            this.prevFrameTime = currentFrameTime - (elapsed % this.fpsInterval);
 
-        ctx.clearRect(0, 0, this.getWidth(), this.getHeight());
+            const ctx = this.getContext();
 
-        ctx.translate(this.getCameraOffset().getX(), this.getCameraOffset().getY());
+            ctx.resetTransform();
 
-        ctx.setTransform(this.getCameraZoomInDecimal(), 0, 0, this.getCameraZoomInDecimal(), this.getCameraOffset().getX(), this.getCameraOffset().getY());
+            ctx.clearRect(0, 0, this.getWidth(), this.getHeight());
 
-        this.drawCartesianPlan();
+            ctx.translate(this.getCameraOffset().getX(), this.getCameraOffset().getY());
 
-        if (this.loop) this.loop(this);
+            ctx.setTransform(this.getCameraZoomInDecimal(), 0, 0, this.getCameraZoomInDecimal(), this.getCameraOffset().getX(), this.getCameraOffset().getY());
+
+            this.drawCartesianPlan();
+
+            this.time = Math.round((currentFrameTime / 1000) * 100) / 100;
+
+            if (this.loop) this.loop(this);
+
+            this.drawMouseDebug();
+
+            if (currentFrameTime > 0) this.fps = Math.round(1000 / elapsed);
+
+            this.drawInfo();
+
+            this.prevFrameTime = currentFrameTime;
+        }
     }
 }

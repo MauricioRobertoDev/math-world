@@ -59,24 +59,10 @@ export default class Paint {
     }
 
     private getPointByDrawMode(point: Vector2D): Vector2D {
-        const realPoint = new Vector2D();
-
-        if (this.draw_mode === "cartesian") {
-            realPoint.setX(point.getX() * this.canvas.getGridSize());
-            realPoint.setY(point.getY() * -this.canvas.getGridSize());
-        }
-
-        if (this.draw_mode === "screen") {
-            realPoint.setX((point.getX() - this.canvas.getCameraOffset().getX()) / this.canvas.getCameraZoomInDecimal());
-            realPoint.setY((point.getY() - this.canvas.getCameraOffset().getY()) / this.canvas.getCameraZoomInDecimal());
-        }
-
-        if (this.draw_mode === "world") {
-            realPoint.setX(point.getX());
-            realPoint.setY(-point.getY());
-        }
-
-        return realPoint;
+        if (this.draw_mode === "cartesian") return this.canvas.toCartesian(point);
+        if (this.draw_mode === "screen") return this.canvas.toScreen(point);
+        if (this.draw_mode === "world") return this.canvas.toWorld(point);
+        return point;
     }
 
     public drawText(text: string, point: Vector2D, color = "white", align: CanvasTextAlign = "left") {
@@ -92,35 +78,6 @@ export default class Paint {
         ctx.lineWidth = 7;
         ctx.fillText(text, point.getX(), point.getY());
         ctx.closePath();
-    }
-
-    public drawMouseDebug() {
-        const ctx = this.canvas.getContext();
-        const mouse = this.canvas.getMousePosition();
-        const mouseInWorld = this.canvas.getMousePositionInWord();
-        const mouseInCartesian = this.canvas.getMousePositionInCartesian();
-        const point = mouse;
-
-        const textMousePosition = "Screen (" + mouse.getX() + ", " + mouse.getY() + ")";
-        const textMouseInWorldPosition = "World (" + mouseInWorld.getX().toFixed(2) + ", " + mouseInWorld.getY().toFixed(2) + ")";
-        const textMouseInCartesianPosition = "Cartesian (" + mouseInCartesian.getX().toFixed(2) + ", " + mouseInCartesian.getY().toFixed(2) + ")";
-
-        ctx.save();
-        ctx.resetTransform();
-        ctx.beginPath();
-        ctx.strokeStyle = this.canvas.getBackgroundColor();
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.font = "bold 16px arial";
-        ctx.lineWidth = 7;
-        ctx.fillStyle = "#5eead4";
-        ctx.fillText(textMousePosition, point.getX(), point.getY() - 48);
-        ctx.fillStyle = "#a5b4fc";
-        ctx.fillText(textMouseInCartesianPosition, point.getX(), point.getY() - 32);
-        ctx.fillStyle = "#f0abfc";
-        ctx.fillText(textMouseInWorldPosition, point.getX(), point.getY() - 16);
-        ctx.closePath();
-        ctx.restore();
     }
 
     public drawLine(A: Vector2D, B: Vector2D, color = "white") {

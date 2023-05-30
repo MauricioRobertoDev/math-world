@@ -1,6 +1,8 @@
 import Paint from "./paint";
 import Vector2D from "./vector-2d";
 
+type MouseDebugMode = "off" | "screen" | "point";
+
 export default class CanvasBase {
     private running = false;
     private canvas = document.getElementById("app") as HTMLCanvasElement;
@@ -34,9 +36,43 @@ export default class CanvasBase {
     private edgeMaxY = this.getOrigin().getY() + this.negativeY * this.getGridSize();
     private edgeMinY = this.getOrigin().getY() - this.positiveY * this.getGridSize();
     private paint = new Paint(this);
+    private mouse_debug_mode: MouseDebugMode = "off";
+    protected prevFrameTime = performance.now();
+    protected fpsInterval = 0;
+    protected time = 0;
+    protected fps = 0;
+    protected max_fps: number | null = null;
+    protected canvas_time = 0;
 
     public getPaint(): Paint {
         return this.paint;
+    }
+
+    public setMouseDebugMode(mode: MouseDebugMode): this {
+        this.mouse_debug_mode = mode;
+        return this;
+    }
+
+    public getMaxFPS(): number | null {
+        return this.max_fps;
+    }
+
+    public setMaxFPS(fps: number): this {
+        this.max_fps = fps;
+        this.fpsInterval = this.max_fps == null ? 1 : 1000 / this.max_fps;
+        return this;
+    }
+
+    public getTime(): number {
+        return this.time;
+    }
+
+    public getCanvasTime(): number {
+        return this.canvas_time;
+    }
+
+    public getFps(): number {
+        return this.fps;
     }
 
     /**
@@ -77,7 +113,7 @@ export default class CanvasBase {
     }
 
     public setWidth(width: number): this {
-        this.width = this.canvas.width = this.cartesianCanvas.width = width;
+        this.width = this.width = this.cartesianCanvas.width = width;
         return this;
     }
 
@@ -89,7 +125,7 @@ export default class CanvasBase {
     }
 
     public setHeight(height: number): this {
-        this.height = this.canvas.height = this.cartesianCanvas.height = height;
+        this.height = this.height = this.cartesianCanvas.height = height;
         return this;
     }
 
@@ -490,8 +526,81 @@ export default class CanvasBase {
         ctx.save();
         ctx.beginPath();
         ctx.fillStyle = "white";
-        ctx.arc(0, 0, 5, 0, 260);
+        ctx.arc(0, 0, 5, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
+    }
+
+    protected drawMouseDebug() {
+        if (this.mouse_debug_mode === "off") return;
+        const ctx = this.getContext();
+        const mouse = this.getMousePosition();
+        const mouseInWorld = this.getMousePositionInWord();
+        const mouseInCartesian = this.getMousePositionInCartesian();
+        const point = this.mouse_debug_mode === "point" ? mouse : new Vector2D(this.width - 200, this.height);
+
+        const textMousePosition = "Screen (" + mouse.getX() + ", " + mouse.getY() + ")";
+        const textMouseInWorldPosition = "World (" + mouseInWorld.getX().toFixed(2) + ", " + mouseInWorld.getY().toFixed(2) + ")";
+        const textMouseInCartesianPosition = "Cartesian (" + mouseInCartesian.getX().toFixed(2) + ", " + mouseInCartesian.getY().toFixed(2) + ")";
+
+        ctx.save();
+        ctx.resetTransform();
+        ctx.beginPath();
+        ctx.strokeStyle = this.getBackgroundColor();
+        ctx.textAlign = "start";
+        ctx.textBaseline = "middle";
+        ctx.font = "bold 16px arial";
+        ctx.lineWidth = 7;
+        ctx.fillStyle = "#5eead4";
+        ctx.fillText(textMousePosition, point.getX(), point.getY() - 60);
+        ctx.fillStyle = "#a5b4fc";
+        ctx.fillText(textMouseInCartesianPosition, point.getX(), point.getY() - 40);
+        ctx.fillStyle = "#f0abfc";
+        ctx.fillText(textMouseInWorldPosition, point.getX(), point.getY() - 20);
+        ctx.closePath();
+        ctx.restore();
+    }
+
+    protected drawInfo() {
+        const ctx = this.getContext();
+
+        ctx.save();
+        ctx.resetTransform();
+        ctx.beginPath();
+        ctx.strokeStyle = this.getBackgroundColor();
+        ctx.textAlign = "start";
+        ctx.textBaseline = "middle";
+        ctx.font = "bold 16px arial";
+
+        ctx.lineWidth = 7;
+        ctx.fillStyle = "white";
+        ctx.fillText("FPS: " + this.fps, 24, 16);
+        ctx.fillText("Tempo: " + this.time.toFixed(1), 100, 16);
+        ctx.fillStyle = this.isRunning() ? "green" : "red";
+        ctx.arc(8, 14, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+        ctx.restore();
+    }
+
+    public toWorld(point: Vector2D): Vector2D {
+        const realPoint = new Vector2D();
+        realPoint.setX(point.getX());
+        realPoint.setY(-point.getY());
+        return realPoint;
+    }
+
+    public toScreen(point: Vector2D): Vector2D {
+        const realPoint = new Vector2D();
+        realPoint.setX((point.getX() - this.getCameraOffset().getX()) / this.getCameraZoomInDecimal());
+        realPoint.setY((point.getY() - this.getCameraOffset().getY()) / this.getCameraZoomInDecimal());
+        return realPoint;
+    }
+
+    public toCartesian(point: Vector2D): Vector2D {
+        const realPoint = new Vector2D();
+        realPoint.setX(point.getX() * this.getGridSize());
+        realPoint.setY(point.getY() * -this.getGridSize());
+        return realPoint;
     }
 }
