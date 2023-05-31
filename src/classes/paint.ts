@@ -1,6 +1,8 @@
 import CanvasBase from "./canvas-base";
 import Vector2D from "./vector-2d";
 
+export type Point = { x: number; y: number };
+
 type DrawMode = "screen" | "world" | "cartesian";
 
 export default class Paint {
@@ -30,32 +32,42 @@ export default class Paint {
     public drawCircle(point: Vector2D, radius: number, startAngle = 0, endAngle = Math.PI * 2, color = "white", width = 1, clockwise = false) {
         point = this.getPointByDrawMode(point);
         const ctx = this.canvas.getContext();
-        // ctx.save();
+
         ctx.beginPath();
         ctx.strokeStyle = color;
         ctx.lineWidth = width;
         ctx.arc(point.getX(), point.getY(), this.draw_mode === "cartesian" ? radius * this.canvas.getGridSize() : radius, startAngle, endAngle, clockwise);
         ctx.stroke();
-        // ctx.restore();
+        ctx.closePath();
     }
 
-    public drawPoint(point: Vector2D, text = "", color = "white") {
+    public drawBall(point: Vector2D, radius: number, startAngle = 0, endAngle = Math.PI * 2, color = "white", clockwise = false) {
         point = this.getPointByDrawMode(point);
         const ctx = this.canvas.getContext();
-        // ctx.save();
+
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.arc(point.getX(), point.getY(), this.draw_mode === "cartesian" ? radius * this.canvas.getGridSize() : radius, startAngle, endAngle, clockwise);
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    public drawPoint(point: Vector2D, text = "", radius = 10, color = "white", textSize = 14, fill = this.canvas.getBackgroundColor()) {
+        point = this.getPointByDrawMode(point);
+        const ctx = this.canvas.getContext();
+
         ctx.beginPath();
         ctx.strokeStyle = color;
-        ctx.fillStyle = this.canvas.getBackgroundColor();
-        ctx.arc(point.getX(), point.getY(), 10, 0, Math.PI * 2);
+        ctx.fillStyle = fill;
+        ctx.arc(point.getX(), point.getY(), this.draw_mode === "cartesian" ? radius * this.canvas.getGridSize() : radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = color;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.font = "bold 14px arial";
+        ctx.font = "bold " + textSize + "px arial";
         ctx.fillText(text, point.getX(), point.getY());
         ctx.closePath();
-        // ctx.restore();
     }
 
     private getPointByDrawMode(point: Vector2D): Vector2D {
@@ -65,7 +77,7 @@ export default class Paint {
         return point;
     }
 
-    public drawText(text: string, point: Vector2D, color = "white", align: CanvasTextAlign = "left") {
+    public drawText(text: string, point: Vector2D, color = "white", size = 14, align: CanvasTextAlign = "left") {
         point = this.getPointByDrawMode(point);
         const ctx = this.canvas.getContext();
 
@@ -74,24 +86,23 @@ export default class Paint {
         ctx.strokeStyle = this.canvas.getBackgroundColor();
         ctx.textAlign = align;
         ctx.textBaseline = "middle";
-        ctx.font = "bold 14px arial";
+        ctx.font = "bold " + size + "px arial";
         ctx.lineWidth = 7;
         ctx.fillText(text, point.getX(), point.getY());
         ctx.closePath();
     }
 
-    public drawLine(A: Vector2D, B: Vector2D, color = "white") {
+    public drawLine(A: Vector2D, B: Vector2D, color = "white", width = 1) {
         A = this.getPointByDrawMode(A);
         B = this.getPointByDrawMode(B);
         const ctx = this.canvas.getContext();
-        ctx.save();
+
         ctx.beginPath();
-        ctx.lineWidth = 1;
+        ctx.lineWidth = width;
         ctx.strokeStyle = color;
         ctx.moveTo(A.getX(), A.getY());
         ctx.lineTo(B.getX(), B.getY());
         ctx.stroke();
         ctx.closePath();
-        ctx.restore();
     }
 }

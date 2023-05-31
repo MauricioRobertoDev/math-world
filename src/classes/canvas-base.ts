@@ -8,11 +8,10 @@ export default class CanvasBase {
     protected running = false;
     protected canvas = document.getElementById("app") as HTMLCanvasElement;
     protected context = this.canvas.getContext("2d") as CanvasRenderingContext2D;
-    protected cartesianCanvas = document.getElementById("cartesian") as HTMLCanvasElement;
-    protected cartesianContext = this.cartesianCanvas.getContext("2d") as CanvasRenderingContext2D;
-    protected width = (this.canvas.width = this.cartesianCanvas.width = window.innerWidth);
-    protected height = (this.canvas.height = this.cartesianCanvas.height = window.innerHeight);
-    protected background_color = "#292D3E";
+
+    protected width = (this.canvas.width = window.innerWidth);
+    protected height = (this.canvas.height = window.innerHeight);
+    protected background_color = "#111827";
     protected grid_size = 32;
     protected rows = 10;
     protected cols = 10;
@@ -44,9 +43,29 @@ export default class CanvasBase {
     protected fps = 0;
     protected max_fps: number | null = null;
     protected canvas_time = 0;
+    protected draw_axis = true;
+
+    protected paused = false;
+    protected world_time_scale = 4;
+    protected world_last_timestamp = 0;
+    protected world_time_start = 0;
+    protected world_time = 0;
+    protected world_paused_time = 0; // Armazena o tempo fictício quando ocorre a pausa
+
+    public getWorldTime() {
+        return this.world_time;
+    }
+
+    public getWorldTimeInTicks() {
+        return this.world_time / 1000;
+    }
 
     public getPaint(): Paint {
         return this.paint;
+    }
+
+    public setDrawAxis(draw: boolean) {
+        this.draw_axis = draw;
     }
 
     public setDrawInfo(draw: boolean) {
@@ -88,16 +107,8 @@ export default class CanvasBase {
         return this.canvas;
     }
 
-    public getCartesianCanvas(): HTMLCanvasElement {
-        return this.cartesianCanvas;
-    }
-
     public getContext(): CanvasRenderingContext2D {
         return this.context;
-    }
-
-    public getCartesianContext(): CanvasRenderingContext2D {
-        return this.cartesianContext;
     }
 
     /**
@@ -119,7 +130,7 @@ export default class CanvasBase {
     }
 
     public setWidth(width: number): this {
-        this.width = this.width = this.cartesianCanvas.width = width;
+        this.width = this.width = width;
         return this;
     }
 
@@ -131,7 +142,7 @@ export default class CanvasBase {
     }
 
     public setHeight(height: number): this {
-        this.height = this.height = this.cartesianCanvas.height = height;
+        this.height = this.height = height;
         return this;
     }
 
@@ -176,7 +187,7 @@ export default class CanvasBase {
     public getMousePositionInWord(): Vector2D {
         const mouse = new Vector2D();
         mouse.setX((this.mouse.getX() - this.getCameraOffset().getX()) / this.getCameraZoomInDecimal());
-        mouse.setY((this.mouse.getY() - this.getCameraOffset().getY()) / this.getCameraZoomInDecimal());
+        mouse.setY(-(this.mouse.getY() - this.getCameraOffset().getY()) / this.getCameraZoomInDecimal());
         return mouse;
     }
 
@@ -269,6 +280,10 @@ export default class CanvasBase {
         return this;
     }
 
+    public setCameraOffsetTo(x: number, y: number): this {
+        this.cameraOffset.setX(x).setY(y);
+        return this;
+    }
     public setCameraOffsetToCenter(): this {
         this.cameraOffset.setX(this.width / 2).setY(this.height / 2);
         return this;
@@ -465,63 +480,64 @@ export default class CanvasBase {
             }
         }
 
-        // desenho das linhas que cruzam o x0, y0
-        ctx.beginPath();
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-        ctx.moveTo(this.edgeMinX, this.getOrigin().getY());
-        ctx.lineTo(this.edgeMaxX, this.getOrigin().getY());
-        ctx.moveTo(this.getOrigin().getX(), this.edgeMinY);
-        ctx.lineTo(this.getOrigin().getX(), this.edgeMaxY);
-        ctx.stroke();
-
-        let index = 0;
-
-        // Marcas de tiques ao longo do eixo X
-        for (let i = -this.negativeX; i <= this.positiveX; i++) {
+        if (this.draw_axis) {
+            // desenho das linhas que cruzam o x0, y0
             ctx.beginPath();
             ctx.lineWidth = 1;
             ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-
-            // Desenhe uma marca de 6px de comprimento (-3 a 3)
-            ctx.moveTo(this.edgeMinX + this.getGridSize() * index + 0.5, this.getOrigin().getY() - 3);
-            ctx.lineTo(this.edgeMinX + this.getGridSize() * index + 0.5, this.getOrigin().getY() + 3);
+            ctx.moveTo(this.edgeMinX, this.getOrigin().getY());
+            ctx.lineTo(this.edgeMaxX, this.getOrigin().getY());
+            ctx.moveTo(this.getOrigin().getX(), this.edgeMinY);
+            ctx.lineTo(this.getOrigin().getX(), this.edgeMaxY);
             ctx.stroke();
 
-            // Valor do texto naquele ponto
-            if (i != 0) {
-                ctx.font = "16px Arial";
-                ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-                ctx.textAlign = "start";
-                ctx.fillText(i.toString(), this.edgeMinX + this.getGridSize() * index - 2, this.getOrigin().getY() + 15);
+            let index = 0;
+
+            // Marcas de tiques ao longo do eixo X
+            for (let i = -this.negativeX; i <= this.positiveX; i++) {
+                ctx.beginPath();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+
+                // Desenhe uma marca de 6px de comprimento (-3 a 3)
+                ctx.moveTo(this.edgeMinX + this.getGridSize() * index + 0.5, this.getOrigin().getY() - 3);
+                ctx.lineTo(this.edgeMinX + this.getGridSize() * index + 0.5, this.getOrigin().getY() + 3);
+                ctx.stroke();
+
+                // Valor do texto naquele ponto
+                if (i != 0) {
+                    ctx.font = "16px Arial";
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+                    ctx.textAlign = "start";
+                    ctx.fillText(i.toString(), this.edgeMinX + this.getGridSize() * index - 2, this.getOrigin().getY() + 15);
+                }
+
+                index++;
             }
 
-            index++;
-        }
+            index = 0;
+            // Marcas de tiques ao longo do eixo y
+            for (let i = this.positiveY; i >= -this.negativeY; i--) {
+                ctx.beginPath();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
 
-        index = 0;
-        // Marcas de tiques ao longo do eixo y
-        for (let i = this.positiveY; i >= -this.negativeY; i--) {
-            ctx.beginPath();
-            ctx.lineWidth = 1;
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+                // Desenhe uma marca de 6px de comprimento (-3 a 3)
+                ctx.moveTo(this.getOrigin().getX() - 3, this.edgeMinY + this.getGridSize() * index + 0.5);
+                ctx.lineTo(this.getOrigin().getX() + 3, this.edgeMinY + this.getGridSize() * index + 0.5);
+                ctx.stroke();
 
-            // Desenhe uma marca de 6px de comprimento (-3 a 3)
-            ctx.moveTo(this.getOrigin().getX() - 3, this.edgeMinY + this.getGridSize() * index + 0.5);
-            ctx.lineTo(this.getOrigin().getX() + 3, this.edgeMinY + this.getGridSize() * index + 0.5);
-            ctx.stroke();
+                // Valor do texto naquele ponto
+                if (i != 0) {
+                    ctx.font = "16px Arial";
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+                    ctx.textAlign = "start";
+                    ctx.fillText(i.toString(), this.getOrigin().getX() + 15, this.edgeMinY + this.getGridSize() * index + 3);
+                }
 
-            // Valor do texto naquele ponto
-            if (i != 0) {
-                ctx.font = "16px Arial";
-                ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-                ctx.textAlign = "start";
-                ctx.fillText(i.toString(), this.getOrigin().getX() + 15, this.edgeMinY + this.getGridSize() * index + 3);
+                index++;
             }
-
-            index++;
         }
-
         // bolinha marcando o ponto 0,0
         ctx.save();
         ctx.beginPath();
@@ -565,6 +581,10 @@ export default class CanvasBase {
         if (!this.draw_info) return;
         const ctx = this.getContext();
 
+        const sec = Math.floor(this.world_time / 1000) % 60;
+        const min = Math.floor(this.world_time / 60000) % 60;
+        const hour = Math.floor(this.world_time / 3600000) % 24;
+
         ctx.save();
         ctx.resetTransform();
         ctx.beginPath();
@@ -576,7 +596,9 @@ export default class CanvasBase {
         ctx.lineWidth = 7;
         ctx.fillStyle = "white";
         ctx.fillText("FPS: " + this.fps, 24, 16);
-        ctx.fillText("Tempo: " + this.time.toFixed(1), 100, 16);
+        // ctx.fillText("Tempo: " + this.time.toFixed(1), 100, 16);
+        ctx.fillText(`World: ${hour}:${min}:${sec}`.replace(/\b\d\b/g, "0$&"), 100, 16);
+        ctx.fillText(`Canvas: ${Math.floor(this.canvas_time / 3600000) % 24}:${Math.floor(this.canvas_time / 60000) % 60}:${Math.floor(this.canvas_time / 1000) % 60}`.replace(/\b\d\b/g, "0$&"), 230, 16);
         ctx.fillStyle = this.isRunning() ? "green" : "red";
         ctx.arc(8, 14, 5, 0, Math.PI * 2);
         ctx.fill();

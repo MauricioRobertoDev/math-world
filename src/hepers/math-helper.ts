@@ -119,3 +119,11 @@ export function calcularPosicaoBola(posicaoAtual: Vector2D, direcao: Vector2D, v
 
     return posicaoFinal;
 }
+
+export function getNormalizedDirection(direction: Vector2D): Vector2D {
+    const magnitude = Math.sqrt(direction.getX() * direction.getX() + direction.getY() * direction.getY());
+    const normalizedX = direction.getX() / magnitude;
+    const normalizedY = direction.getY() / magnitude;
+
+    return new Vector2D(normalizedX, normalizedY);
+}

@@ -17,13 +17,6 @@ body {
     position: relative;
 }
 
-.cartesian {
-    position: fixed;
-    top: 0px;
-    left: 0px;
-    z-index: 2;
-}
-
 .app {
     position: fixed;
     top: 0px;

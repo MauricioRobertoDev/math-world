@@ -16,11 +16,22 @@ export default class Canvas extends CanvasBase {
     }
 
     public play(): void {
-        this.setRunning(true);
+        if (this.paused) {
+            this.paused = false;
+            this.world_last_timestamp = Date.now();
+        }
     }
 
     public pause(): void {
-        this.setRunning(false);
+        if (!this.paused) {
+            this.paused = true;
+            this.world_paused_time = this.world_time;
+        }
+    }
+
+    public reset() {
+        this.world_time = 0;
+        this.world_paused_time = 0;
     }
 
     private update(timestamp = 0): void {
@@ -31,8 +42,26 @@ export default class Canvas extends CanvasBase {
         const currentFrameTime = performance.now();
         const elapsed = currentFrameTime - this.prevFrameTime;
 
+        if (!this.paused) {
+            // let gameTime = this.world_time_start + (timestamp - this.world_last_timestamp) * this.world_time_scale;
+
+            const deltaTime = (timestamp - this.world_last_timestamp) * this.world_time_scale;
+
+            this.world_time += deltaTime;
+
+            // console.log(Math.round((this.world_time / 1000) * 100) / 100);
+
+            // Atualize o estado do seu mundo fictício com base no deltaTime
+        }
+
+        this.world_last_timestamp = timestamp;
+
         if (elapsed > this.fpsInterval) {
             this.prevFrameTime = currentFrameTime - (elapsed % this.fpsInterval);
+
+            this.fps = Math.round(1000 / elapsed);
+
+            this.prevFrameTime = currentFrameTime;
 
             const ctx = this.getContext();
 
@@ -48,15 +77,13 @@ export default class Canvas extends CanvasBase {
 
             this.time = Math.round((currentFrameTime / 1000) * 100) / 100;
 
+            // console.log(this.time);
+
             if (this.loop) this.loop(this);
 
             this.drawMouseDebug();
 
             this.drawInfo();
-
-            if (currentFrameTime > 0) this.fps = Math.round(1000 / elapsed);
-
-            this.prevFrameTime = currentFrameTime;
         }
     }
 }
