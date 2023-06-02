@@ -19,7 +19,6 @@
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
 
-        "allowJs": true,
         "declaration": true,
         "emitDeclarationOnly": true,
         "outDir": "dist",
