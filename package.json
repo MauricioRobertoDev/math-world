@@ -29,7 +29,8 @@
         "eslint": "^8.41.0",
         "prettier": "^2.8.8",
         "typescript": "^5.0.2",
-        "vite": "^4.3.2"
+        "vite": "^4.3.2",
+        "vite-plugin-dts": "^2.3.0"
     },
     "description": "Um mundo simples para a matemática",
     "dependencies": {
