@@ -3,6 +3,17 @@
     "private": true,
     "version": "0.0.0",
     "type": "module",
+    "files": [
+        "dist"
+    ],
+    "main": "./dist/math-world.umd.cjs",
+    "module": "./dist/math-world.js",
+    "exports": {
+        ".": {
+            "import": "./dist/math-world.js",
+            "require": "./dist/math-world.umd.cjs"
+        }
+    },
     "scripts": {
         "dev": "vite",
         "build": "tsc && vite build",
