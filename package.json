@@ -6,12 +6,12 @@
     "files": [
         "dist"
     ],
-    "main": "./dist/math-world.umd.cjs",
+    "main": "./dist/math-world.cjs",
     "module": "./dist/math-world.js",
     "exports": {
         ".": {
             "import": "./dist/math-world.js",
-            "require": "./dist/math-world.umd.cjs"
+            "require": "./dist/math-world.cjs"
         }
     },
     "scripts": {
