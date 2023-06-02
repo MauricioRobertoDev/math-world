@@ -1,6 +1,6 @@
-export type Point = { x: number; y: number };
+import { Point } from "../types";
 
-export default class Vector2D {
+export default class Vector2D implements Point {
     private _x: number;
     private _y: number;
 
@@ -43,8 +43,14 @@ export default class Vector2D {
         return Math.atan2(this._y, this._x);
     }
 
-    public angle(): number {
+    public angleInRadians(): number {
         return Math.atan2(this._y, this._x);
+    }
+
+    public angleInDegrees(): number {
+        const rad = Math.atan2(this._y, this._x);
+        if (rad < 0) return 360.0 + rad * (180 / Math.PI);
+        return rad * (180 / Math.PI);
     }
 
     public normalize(): this {
@@ -124,6 +130,10 @@ export default class Vector2D {
         this._x = x;
         this._y = y;
         return this;
+    }
+
+    public toString(fractionDigits?: number | undefined): string {
+        return `(${this._x.toFixed(fractionDigits)},${this._y.toFixed(fractionDigits)})`;
     }
 
     public log() {
