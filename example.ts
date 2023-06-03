@@ -33,26 +33,36 @@ world.loop((world) => {
 
     paint.cartesian();
 
-    paint.drawLine(A, B);
-    paint.drawText("Radius: " + c.toFixed(2), linearInterpolation2D(A, B, 0.5));
+    paint.line(A, B).draw();
+    paint.text(linearInterpolation2D(A, B, 0.5), "Radius: " + c.toFixed(2)).draw();
 
-    paint.drawLine(B, C, "#22c55e");
-    paint.drawText("sin: " + sin.toFixed(2), linearInterpolation2D(B, C, 0.5), "#22c55e");
+    paint.line(B, C, "#22c55e").draw();
+    paint.text(linearInterpolation2D(B, C, 0.5), "sin: " + sin.toFixed(2), "#22c55e").draw();
 
-    paint.drawLine(new Vector2D(A.getX(), B.getY()), B, "#0ea5e9");
-    paint.drawText("cos: " + cos.toFixed(2), linearInterpolation2D(new Vector2D(A.getX(), B.getY()), B, 0.5), "#0ea5e9");
+    paint.line(new Vector2D(A.getX(), B.getY()), B, "#0ea5e9").draw();
+    paint.text(linearInterpolation2D(new Vector2D(A.getX(), B.getY()), B, 0.5), "cos: " + cos.toFixed(2), "#0ea5e9").draw();
 
-    paint.drawLine(B, T, "#f97316");
-    paint.drawText("tan: " + tan.toFixed(2), linearInterpolation2D(B, T, 0.5), "#f97316");
+    paint.line(B, T, "#f97316").draw();
+    paint.text(linearInterpolation2D(B, T, 0.5), "tan: " + tan.toFixed(2), "#f97316").draw();
 
-    paint.drawCircle(new Vector2D(), c, 0, -B.angleInRadians(), "#fde68a", 1, theta > 0);
+    paint
+        .circle(new Vector2D(), c)
+        .startAngle(0)
+        .endAngle(-B.angleInRadians())
+        .color("#fde68a")
+        .clockwise(theta > 0)
+        .draw();
 
     paint.screen();
-    paint.drawText("sin = a/c = " + sin.toFixed(2), new Vector2D(20, 40), "#22c55e");
-    paint.drawText("cos = b/c = " + cos.toFixed(2), new Vector2D(20, 60), "#0ea5e9");
-    paint.drawText("tan = sin/cos = " + tan.toFixed(2), new Vector2D(20, 80), "#f97316");
-    paint.drawText("θ = " + theta.toFixed(2) + " (" + B.angleInDegrees().toFixed(2) + "°)", new Vector2D(20, 100));
-    paint.drawText("X: " + B.getX().toFixed(2) + "    " + "Y: " + B.getY().toFixed(2), new Vector2D(20, 120));
+    paint
+        .text(new Vector2D(20, 40), "sin = a/c = " + sin.toFixed(2), "#22c55e")
+        .align("left")
+        .draw();
+
+    paint.text(new Vector2D(20, 60), "cos = b/c = " + cos.toFixed(2), "#0ea5e9").draw();
+    paint.text(new Vector2D(20, 80), "tan = sin/cos = " + tan.toFixed(2), "#f97316").draw();
+    paint.text(new Vector2D(20, 100), "θ = " + theta.toFixed(2) + " (" + B.angleInDegrees().toFixed(2) + "°)").draw();
+    paint.text(new Vector2D(20, 120), "X: " + B.getX().toFixed(2) + "    " + "Y: " + B.getY().toFixed(2)).draw();
 });
 
 world.start();

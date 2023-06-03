@@ -39,7 +39,7 @@ export default class MathWorld implements MathWorldContract {
     private canvas_fps_interval = 1;
     private canvas_last_frame_time = 0;
     private canvas_draw_info = true;
-    private canvas_paint = new Paint(this);
+    private canvas_paint: Paint;
 
     private cartesian_plane_grid_size = 32;
     private cartesian_plane_negativeX = 0;
@@ -66,6 +66,7 @@ export default class MathWorld implements MathWorldContract {
         this.canvas_element.style.backgroundColor = this.canvas_background;
         this.moveCameraOffsetToCenter();
         this.setCartesianPlaneToFullScreen();
+        this.canvas_paint = new Paint(this);
     }
 
     // Math World

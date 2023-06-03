@@ -1,10 +1,26 @@
 import MathWorldContract from "../contracts/math-world-base";
+import ArcBuilder from "../shapes/arc";
+import LineBuilder from "../shapes/line";
+import PointBuilder from "../shapes/point";
+import RectBuilder from "../shapes/rect";
+import TextBuilder from "../shapes/text";
 import { PaintDrawMode, Point } from "../types";
 
 export default class Paint {
     private draw_mode: PaintDrawMode = "off";
+    private arc_builder: ArcBuilder;
+    private line_builder: LineBuilder;
+    private text_builder: TextBuilder;
+    private point_builder: PointBuilder;
+    private rect_builder: RectBuilder;
 
-    constructor(private world_math: MathWorldContract) {}
+    constructor(private world_math: MathWorldContract) {
+        this.arc_builder = new ArcBuilder(this.world_math.getContext());
+        this.line_builder = new LineBuilder(this.world_math.getContext());
+        this.text_builder = new TextBuilder(this.world_math.getContext());
+        this.point_builder = new PointBuilder(this.world_math.getContext());
+        this.rect_builder = new RectBuilder(this.world_math.getContext());
+    }
 
     public mode(draw_mode: PaintDrawMode) {
         this.draw_mode = draw_mode;
@@ -26,45 +42,46 @@ export default class Paint {
         this.draw_mode = "cartesian";
     }
 
-    public drawCircle(point: Point, radius: number, startAngle = 0, endAngle = Math.PI * 2, color = "white", width = 1, clockwise = false) {
-        point = this.getPointByDrawMode(point);
-        const ctx = this.world_math.getContext();
+    // arc
 
-        ctx.beginPath();
-        ctx.strokeStyle = color;
-        ctx.lineWidth = width;
-        ctx.arc(point.x, point.y, this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius, startAngle, endAngle, clockwise);
-        ctx.stroke();
-        ctx.closePath();
+    public arc(point: Point, radius: number): ArcBuilder {
+        return this.arc_builder.center(this.getPointByDrawMode(point)).radius(this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius);
     }
 
-    public drawBall(point: Point, radius: number, startAngle = 0, endAngle = Math.PI * 2, color = "white", clockwise = false) {
-        point = this.getPointByDrawMode(point);
-        const ctx = this.world_math.getContext();
-
-        ctx.beginPath();
-        ctx.fillStyle = color;
-        ctx.arc(point.x, point.y, this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius, startAngle, endAngle, clockwise);
-        ctx.fill();
-        ctx.closePath();
+    public circle(point: Point, radius: number): ArcBuilder {
+        return this.arc(point, radius);
     }
 
-    public drawPoint(point: Point, text = "", radius = 10, color = "white", textSize = 14, fill = this.world_math.getBackgroundColor()) {
-        point = this.getPointByDrawMode(point);
-        const ctx = this.world_math.getContext();
+    public ball(point: Point, radius: number, color: string): ArcBuilder {
+        return this.arc(point, radius).fill(color).stroke("transparent", 0);
+    }
 
-        ctx.beginPath();
-        ctx.strokeStyle = color;
-        ctx.fillStyle = fill;
-        ctx.arc(point.x, point.y, this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.fillStyle = color;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.font = "bold " + textSize + "px arial";
-        ctx.fillText(text, point.x, point.y);
-        ctx.closePath();
+    // line
+
+    public line(startPoint: Point, endPoint: Point, color = "white"): LineBuilder {
+        return this.line_builder.start(this.getPointByDrawMode(startPoint)).end(this.getPointByDrawMode(endPoint)).color(color);
+    }
+
+    // text
+
+    public text(point: Point, text: string, color = "white"): TextBuilder {
+        return this.text_builder.point(this.getPointByDrawMode(point)).text(text).color(color);
+    }
+
+    // point
+
+    public point(point: Point, text = ""): PointBuilder {
+        return this.point_builder
+            .point(this.getPointByDrawMode(point))
+            .text(text)
+            .radius(this.world_math.getGridSize() / 2)
+            .fill(this.world_math.getBackgroundColor());
+    }
+
+    // rect
+
+    public rect(start: Point, end: Point, color = "white"): RectBuilder {
+        return this.rect_builder.start(this.getPointByDrawMode(start)).end(this.getPointByDrawMode(end)).stroke(color);
     }
 
     private getPointByDrawMode(point: Point): Point {
@@ -73,34 +90,5 @@ export default class Paint {
         if (this.draw_mode === "screen") return this.world_math.toScreen(point);
         if (this.draw_mode === "world") return this.world_math.toWorld(point);
         return point;
-    }
-
-    public drawText(text: string, point: Point, color = "white", size = 14, align: CanvasTextAlign = "left") {
-        point = this.getPointByDrawMode(point);
-        const ctx = this.world_math.getContext();
-
-        ctx.beginPath();
-        ctx.fillStyle = color;
-        ctx.strokeStyle = this.world_math.getBackgroundColor();
-        ctx.textAlign = align;
-        ctx.textBaseline = "middle";
-        ctx.font = "bold " + size + "px arial";
-        ctx.lineWidth = 7;
-        ctx.fillText(text, point.x, point.y);
-        ctx.closePath();
-    }
-
-    public drawLine(A: Point, B: Point, color = "white", width = 1) {
-        A = this.getPointByDrawMode(A);
-        B = this.getPointByDrawMode(B);
-        const ctx = this.world_math.getContext();
-
-        ctx.beginPath();
-        ctx.lineWidth = width;
-        ctx.strokeStyle = color;
-        ctx.moveTo(A.x, A.y);
-        ctx.lineTo(B.x, B.y);
-        ctx.stroke();
-        ctx.closePath();
     }
 }
