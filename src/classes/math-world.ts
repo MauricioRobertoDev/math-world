@@ -256,7 +256,7 @@ export default class MathWorld implements MathWorldContract {
     }
 
     public getWorldTimeInTicks(): number {
-        return Math.round(this.world_time / 1000);
+        return this.world_time / 1000;
     }
 
     public getWorldTimeInHoursMinutesAndSeconds(): string {
