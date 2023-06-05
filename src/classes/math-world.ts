@@ -55,6 +55,12 @@ export default class MathWorld implements MathWorldContract {
 
     private math_world_loop: ((world: this) => void) | null = null;
 
+    private on_start: ((world: this) => void) | null = null;
+    private on_play: ((world: this) => void) | null = null;
+    private on_pause: ((world: this) => void) | null = null;
+    private on_reset: ((world: this) => void) | null = null;
+    private on_stop: ((world: this) => void) | null = null;
+
     public constructor(canvasId: string) {
         const canvasElement = document.querySelector<HTMLCanvasElement>("#" + canvasId);
         if (!canvasElement) throw new Error("Não existe nenhum canvas com o id: " + canvasId);
@@ -77,23 +83,28 @@ export default class MathWorld implements MathWorldContract {
         this.canvasPlay();
         this.setupEvents();
         this.update();
+        if (this.on_start) this.on_start(this);
     }
 
     public play(): void {
         this.playWorldTime();
+        if (this.on_play) this.on_play(this);
     }
 
     public pause(): void {
         this.pauseWorldTime();
+        if (this.on_pause) this.on_pause(this);
     }
 
     public stop(): void {
         this.pauseWorldTime();
         this.canvasStop();
+        if (this.on_stop) this.on_stop(this);
     }
 
     public reset(): void {
         this.resetWorldTime();
+        if (this.on_reset) this.on_reset(this);
     }
 
     public loop(loop: (world: this) => void): void {
@@ -775,5 +786,30 @@ export default class MathWorld implements MathWorldContract {
 
     public isPaused(): boolean {
         return this.world_time_is_paused;
+    }
+
+    public onStart(callback: (world: MathWorldContract) => void): this {
+        this.on_start = callback;
+        return this;
+    }
+
+    public onPlay(callback: (world: MathWorldContract) => void): this {
+        this.on_play = callback;
+        return this;
+    }
+
+    public onPause(callback: (world: MathWorldContract) => void): this {
+        this.on_pause = callback;
+        return this;
+    }
+
+    public onReset(callback: (world: MathWorldContract) => void): this {
+        this.on_reset = callback;
+        return this;
+    }
+
+    public onStop(callback: (world: MathWorldContract) => void): this {
+        this.on_stop = callback;
+        return this;
     }
 }

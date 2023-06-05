@@ -52,6 +52,5 @@
         "url": "https://github.com/MauricioRobertoDev/math-world/issues"
     },
     "homepage": "https://github.com/MauricioRobertoDev/math-world#readme",
-    "types": "./dist/math-world.d.ts",
-    "dependencies": {}
+    "types": "./dist/math-world.d.ts"
 }
