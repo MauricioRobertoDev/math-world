@@ -9,4 +9,5 @@ export default interface HasWorld {
     playWorldTime(): this;
     getWorldTimeInHoursMinutesAndSeconds(): string;
     getPaint(): Paint;
+    worldTimeIsPaused(): boolean;
 }

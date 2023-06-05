@@ -74,12 +74,12 @@ export default class MathWorld implements MathWorldContract {
     public start(): void {
         this.calculateScreenOrigin();
         this.play();
+        this.canvasPlay();
         this.setupEvents();
         this.update();
     }
 
     public play(): void {
-        this.canvasPlay();
         this.playWorldTime();
     }
 
@@ -269,6 +269,10 @@ export default class MathWorld implements MathWorldContract {
 
     public getPaint(): Paint {
         return this.canvas_paint;
+    }
+
+    public worldTimeIsPaused(): boolean {
+        return this.world_time_is_paused;
     }
 
     public setWorldTimeScale(scale: number): this {
@@ -765,5 +769,9 @@ export default class MathWorld implements MathWorldContract {
         const realPoint = { x: point.x * this.getGridSize(), y: point.y * -this.getGridSize() };
         if (point instanceof Vector2D) return Vector2D.fromPoint(realPoint);
         return realPoint;
+    }
+
+    public isPaused(): boolean {
+        return this.world_time_is_paused;
     }
 }

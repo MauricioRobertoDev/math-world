@@ -8,7 +8,11 @@ world.setPositiveX(1);
 world.setPositiveY(1);
 world.setNegativeX(1);
 world.setNegativeY(1);
-world.isZoomable(false);
+// world.isZoomable(false);
+world.setCameraMaxZoom(1000);
+world.setCameraMinZoom(5);
+world.setCameraZoom(10);
+world.setCameraZoom(20);
 
 let theta = Math.PI / 4;
 const c = 1;
@@ -33,36 +37,26 @@ world.loop((world) => {
 
     paint.cartesian();
 
-    paint.line(A, B).draw();
-    paint.text(linearInterpolation2D(A, B, 0.5), "Radius: " + c.toFixed(2)).draw();
+    paint.line({ startPoint: A, endPoint: B });
+    paint.text({ point: linearInterpolation2D(A, B, 0.5), text: "Radius: " + c.toFixed(2) });
 
-    paint.line(B, C, "#22c55e").draw();
-    paint.text(linearInterpolation2D(B, C, 0.5), "sin: " + sin.toFixed(2), "#22c55e").draw();
+    paint.line({ startPoint: B, endPoint: C, strokeColor: "#22c55e" });
+    paint.text({ point: linearInterpolation2D(B, C, 0.5), text: "sin: " + sin.toFixed(2), textColor: "#22c55e" });
 
-    paint.line(new Vector2D(A.getX(), B.getY()), B, "#0ea5e9").draw();
-    paint.text(linearInterpolation2D(new Vector2D(A.getX(), B.getY()), B, 0.5), "cos: " + cos.toFixed(2), "#0ea5e9").draw();
+    paint.line({ startPoint: new Vector2D(A.getX(), B.getY()), endPoint: B, strokeColor: "#0ea5e9" });
+    paint.text({ point: linearInterpolation2D(new Vector2D(A.getX(), B.getY()), B, 0.5), text: "cos: " + cos.toFixed(2), textColor: "#0ea5e9" });
 
-    paint.line(B, T, "#f97316").draw();
-    paint.text(linearInterpolation2D(B, T, 0.5), "tan: " + tan.toFixed(2), "#f97316").draw();
+    paint.line({ startPoint: B, endPoint: T, strokeColor: "#f97316" });
+    paint.text({ point: linearInterpolation2D(B, T, 0.5), text: "tan: " + tan.toFixed(2), textColor: "#f97316" });
 
-    paint
-        .circle(new Vector2D(), c)
-        .startAngle(0)
-        .endAngle(-B.angleInRadians())
-        .color("#fde68a")
-        .clockwise(theta > 0)
-        .draw();
+    paint.circle({ point: new Vector2D(), radius: c, startAngle: 0, endAngle: -B.angleInRadians(), strokeColor: "#fde68a", clockwise: theta > 0 });
 
     paint.screen();
-    paint
-        .text(new Vector2D(20, 40), "sin = a/c = " + sin.toFixed(2), "#22c55e")
-        .align("left")
-        .draw();
-
-    paint.text(new Vector2D(20, 60), "cos = b/c = " + cos.toFixed(2), "#0ea5e9").draw();
-    paint.text(new Vector2D(20, 80), "tan = sin/cos = " + tan.toFixed(2), "#f97316").draw();
-    paint.text(new Vector2D(20, 100), "θ = " + theta.toFixed(2) + " (" + B.angleInDegrees().toFixed(2) + "°)").draw();
-    paint.text(new Vector2D(20, 120), "X: " + B.getX().toFixed(2) + "    " + "Y: " + B.getY().toFixed(2)).draw();
+    paint.text({ point: new Vector2D(20, 40), textAlign: "left", text: "sin = a/c = " + sin.toFixed(2), textColor: "#22c55e" });
+    paint.text({ point: new Vector2D(20, 60), textAlign: "left", text: "cos = b/c = " + cos.toFixed(2), textColor: "#0ea5e9" });
+    paint.text({ point: new Vector2D(20, 80), textAlign: "left", text: "tan = sin/cos = " + tan.toFixed(2), textColor: "#f97316" });
+    paint.text({ point: new Vector2D(20, 100), textAlign: "left", text: "θ = " + theta.toFixed(2) + " (" + B.angleInDegrees().toFixed(2) + "°)" });
+    paint.text({ point: new Vector2D(20, 120), textAlign: "left", text: "X: " + B.getX().toFixed(2) + "    " + "Y: " + B.getY().toFixed(2) });
 });
 
 world.start();

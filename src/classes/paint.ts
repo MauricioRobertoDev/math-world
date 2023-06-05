@@ -1,26 +1,10 @@
 import MathWorldContract from "../contracts/math-world-base";
-import ArcBuilder from "../shapes/arc";
-import LineBuilder from "../shapes/line";
-import PointBuilder from "../shapes/point";
-import RectBuilder from "../shapes/rect";
-import TextBuilder from "../shapes/text";
-import { PaintDrawMode, Point } from "../types";
+import { ArcDraw, CircleDraw, LineDraw, PaintDrawMode, Point, PointDraw, RectDraw, TextDraw } from "../types";
 
 export default class Paint {
     private draw_mode: PaintDrawMode = "off";
-    private arc_builder: ArcBuilder;
-    private line_builder: LineBuilder;
-    private text_builder: TextBuilder;
-    private point_builder: PointBuilder;
-    private rect_builder: RectBuilder;
 
-    constructor(private world_math: MathWorldContract) {
-        this.arc_builder = new ArcBuilder(this.world_math.getContext());
-        this.line_builder = new LineBuilder(this.world_math.getContext());
-        this.text_builder = new TextBuilder(this.world_math.getContext());
-        this.point_builder = new PointBuilder(this.world_math.getContext());
-        this.rect_builder = new RectBuilder(this.world_math.getContext());
-    }
+    constructor(private world_math: MathWorldContract) {}
 
     public mode(draw_mode: PaintDrawMode) {
         this.draw_mode = draw_mode;
@@ -43,52 +27,150 @@ export default class Paint {
     }
 
     // arc
+    public arc({ point, radius, startAngle = 0, endAngle = Math.PI * 2, startAngleForHumans, endAngleForHumans, lineWidth = 1, strokeColor = "white", fillColor, clockwise = false }: ArcDraw): this {
+        const ctx = this.world_math.getContext();
 
-    public arc(point: Point, radius: number): ArcBuilder {
-        return this.arc_builder.center(this.getPointByDrawMode(point)).radius(this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius);
+        point = this.getPointByDrawMode(point);
+        radius = this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius;
+        startAngle = startAngleForHumans ? angleInRadians(startAngleForHumans) : startAngle;
+        endAngle = endAngleForHumans ? angleInRadians(endAngleForHumans) : endAngle;
+
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, radius, startAngle, endAngle, clockwise);
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = lineWidth;
+        ctx.stroke();
+        if (fillColor) {
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+        }
+        ctx.closePath();
+
+        return this;
     }
 
-    public circle(point: Point, radius: number): ArcBuilder {
-        return this.arc(point, radius);
-    }
+    public circle({ point, radius, startAngle = 0, endAngle = Math.PI * 2, startAngleForHumans, endAngleForHumans, lineWidth = 1, strokeColor = "white", fillColor, clockwise = false }: CircleDraw): this {
+        const ctx = this.world_math.getContext();
 
-    public ball(point: Point, radius: number, color: string): ArcBuilder {
-        return this.arc(point, radius).fill(color).stroke("transparent", 0);
+        point = this.getPointByDrawMode(point);
+        radius = this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius;
+        startAngle = startAngleForHumans ? angleInRadians(startAngleForHumans) : startAngle;
+        endAngle = endAngleForHumans ? angleInRadians(endAngleForHumans) : endAngle;
+
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, radius, startAngle, endAngle, clockwise);
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = lineWidth;
+        ctx.stroke();
+        if (fillColor) {
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+        }
+        ctx.closePath();
+
+        return this;
     }
 
     // line
+    public line({ startPoint, endPoint, lineWidth = 1, strokeColor = "white" }: LineDraw): this {
+        const ctx = this.world_math.getContext();
 
-    public line(startPoint: Point, endPoint: Point, color = "white"): LineBuilder {
-        return this.line_builder.start(this.getPointByDrawMode(startPoint)).end(this.getPointByDrawMode(endPoint)).color(color);
+        startPoint = this.getPointByDrawMode(startPoint);
+        endPoint = this.getPointByDrawMode(endPoint);
+
+        ctx.beginPath();
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = strokeColor;
+        ctx.moveTo(startPoint.x, startPoint.y);
+        ctx.lineTo(endPoint.x, endPoint.y);
+        ctx.stroke();
+        ctx.closePath();
+
+        return this;
     }
 
     // text
+    public text({ point, text, textAlign = "center", strokeWidth = 1, strokeColor, textColor = "white", textBaseline = "middle", textSize = 16 }: TextDraw): this {
+        const ctx = this.world_math.getContext();
 
-    public text(point: Point, text: string, color = "white"): TextBuilder {
-        return this.text_builder.point(this.getPointByDrawMode(point)).text(text).color(color);
+        point = this.getPointByDrawMode(point);
+
+        ctx.beginPath();
+        ctx.fillStyle = textColor;
+        ctx.textAlign = textAlign;
+        ctx.textBaseline = textBaseline;
+        ctx.font = "bold " + textSize + "px arial";
+        if (strokeColor) {
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = strokeWidth;
+            ctx.strokeText(text, point.x, point.y);
+        }
+        ctx.fillText(text, point.x, point.y);
+        ctx.closePath();
+
+        return this;
     }
 
     // point
+    public point({ point, radius, text, color = "white", fillColor = this.world_math.getBackgroundColor(), textSize = 16, borderWidth = 4 }: PointDraw): this {
+        const ctx = this.world_math.getContext();
 
-    public point(point: Point, text = ""): PointBuilder {
-        return this.point_builder
-            .point(this.getPointByDrawMode(point))
-            .text(text)
-            .radius(this.world_math.getGridSize() / 2)
-            .fill(this.world_math.getBackgroundColor());
+        radius = this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius;
+        point = this.getPointByDrawMode(point);
+
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.fillStyle = fillColor;
+        ctx.lineWidth = borderWidth;
+        ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        if (text) {
+            ctx.fillStyle = color;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.font = "bold " + textSize + "px arial";
+            ctx.fillText(text, point.x, point.y);
+        }
+        ctx.closePath();
+
+        return this;
     }
 
     // rect
+    public rect({ startPoint, endPoint, lineWidth = 1, strokeColor = "white", fillColor }: RectDraw): this {
+        const ctx = this.world_math.getContext();
 
-    public rect(start: Point, end: Point, color = "white"): RectBuilder {
-        return this.rect_builder.start(this.getPointByDrawMode(start)).end(this.getPointByDrawMode(end)).stroke(color);
+        startPoint = this.getPointByDrawMode(startPoint);
+        endPoint = this.getPointByDrawMode(endPoint);
+
+        ctx.beginPath();
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = strokeColor;
+        ctx.moveTo(startPoint.x, startPoint.y);
+        ctx.lineTo(endPoint.x, startPoint.y);
+        ctx.lineTo(endPoint.x, endPoint.y);
+        ctx.lineTo(startPoint.x, endPoint.y);
+        ctx.lineTo(startPoint.x, startPoint.y);
+        ctx.stroke();
+        if (fillColor) {
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+        }
+        ctx.closePath();
+
+        return this;
     }
 
-    private getPointByDrawMode(point: Point): Point {
+    public getPointByDrawMode(point: Point): Point {
         if (this.draw_mode === "off") return point;
         if (this.draw_mode === "cartesian") return this.world_math.toCartesian(point);
         if (this.draw_mode === "screen") return this.world_math.toScreen(point);
         if (this.draw_mode === "world") return this.world_math.toWorld(point);
         return point;
     }
+}
+
+function angleInRadians(degrees: number): number {
+    return degrees * (Math.PI / 180);
 }

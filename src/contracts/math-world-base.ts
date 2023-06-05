@@ -17,4 +17,5 @@ export default interface MathWorldContract extends HasCamera, HasCanvas, HasPoin
     toWorld(point: Vector2D | Point): Vector2D | Point;
     toScreen(point: Vector2D | Point): Vector2D | Point;
     toCartesian(point: Vector2D | Point): Vector2D | Point;
+    isPaused(): boolean;
 }
