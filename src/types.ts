@@ -17,6 +17,7 @@ export type ArcDraw = {
     lineWidth?: number;
     strokeColor?: string | CanvasGradient | CanvasPattern;
     fillColor?: string | CanvasGradient | CanvasPattern;
+    lineDash?: number[];
 };
 
 export type CircleDraw = {
@@ -30,6 +31,7 @@ export type CircleDraw = {
     lineWidth?: number;
     strokeColor?: string | CanvasGradient | CanvasPattern;
     fillColor?: string | CanvasGradient | CanvasPattern;
+    lineDash?: number[];
 };
 
 export type RectDraw = {
@@ -38,6 +40,7 @@ export type RectDraw = {
     lineWidth?: number;
     strokeColor?: string | CanvasGradient | CanvasPattern;
     fillColor?: string | CanvasGradient | CanvasPattern;
+    lineDash?: number[];
 };
 
 export type LineDraw = {
@@ -45,6 +48,7 @@ export type LineDraw = {
     endPoint: Vector2D | Point;
     lineWidth?: number;
     strokeColor?: string | CanvasGradient | CanvasPattern;
+    lineDash?: number[];
 };
 
 export type TextDraw = {
@@ -67,4 +71,5 @@ export type PointDraw = {
     color?: string | CanvasGradient | CanvasPattern;
     fillColor?: string | CanvasGradient | CanvasPattern;
     textSize?: number;
+    lineDash?: number[];
 };
