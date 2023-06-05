@@ -8,11 +8,7 @@ world.setPositiveX(1);
 world.setPositiveY(1);
 world.setNegativeX(1);
 world.setNegativeY(1);
-// world.isZoomable(false);
-world.setCameraMaxZoom(1000);
-world.setCameraMinZoom(5);
-world.setCameraZoom(10);
-world.setCameraZoom(20);
+world.isZoomable(false);
 
 let theta = Math.PI / 4;
 const c = 1;

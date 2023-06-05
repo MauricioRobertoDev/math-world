@@ -179,10 +179,6 @@ export default class MathWorld implements MathWorldContract {
         return this;
     }
 
-    public setCameraZoom(amount: number): this {
-        return this.zoom(amount);
-    }
-
     public setCameraZoomAt(amount: number, point: Vector2D | Point): this {
         return this.zoomAt(amount, point);
     }
@@ -472,29 +468,35 @@ export default class MathWorld implements MathWorldContract {
         return this.camera_zoom_current / 100;
     }
 
-    private getCameraMaxZoomInDecimal(): number {
-        return this.camera_zoom_max / 100;
-    }
+    public setCameraZoom(amount: number): this {
+        if (!this.camera_is_dragging) {
+            if (amount < this.camera_zoom_min || amount > this.camera_zoom_max) {
+                throw new Error(`O zoom deve estar entre o mínimo: ${this.camera_zoom_min}% e o máximo: ${this.camera_zoom_max}%.`);
+            }
 
-    private getCameraMinZoomInDecimal(): number {
-        return this.camera_zoom_min / 100;
+            this.camera_zoom_current = amount;
+            this.getCameraOffset().setX(this.getCameraOffset().getX());
+            this.getCameraOffset().setY(this.getCameraOffset().getY());
+        }
+
+        return this;
     }
 
     private zoomAtWithDecimal(decimalAmount: number, point: Vector2D | Point) {
         if (!this.camera_is_dragging) {
-            let newZoom = this.getCameraZoomInDecimal() * decimalAmount;
+            let newZoom = this.camera_zoom_current * decimalAmount;
 
-            if (newZoom > this.getCameraMaxZoomInDecimal()) {
-                decimalAmount = this.getCameraMaxZoomInDecimal() / this.getCameraZoomInDecimal();
-                newZoom = this.getCameraZoomInDecimal() * decimalAmount;
+            if (newZoom > this.camera_zoom_max) {
+                decimalAmount = this.camera_zoom_max / this.camera_zoom_current;
+                newZoom = this.camera_zoom_current * decimalAmount;
             }
 
-            if (newZoom < this.getCameraMinZoomInDecimal()) {
-                decimalAmount = this.getCameraMinZoomInDecimal() / this.getCameraZoomInDecimal();
-                newZoom = this.getCameraZoomInDecimal() * decimalAmount;
+            if (newZoom < this.camera_zoom_min) {
+                decimalAmount = this.camera_zoom_min / this.camera_zoom_current;
+                newZoom = this.camera_zoom_current * decimalAmount;
             }
 
-            this.camera_zoom_current = newZoom * 100;
+            this.camera_zoom_current = newZoom;
             this.getCameraOffset().setX(point.x - (point.x - this.getCameraOffset().getX()) * decimalAmount);
             this.getCameraOffset().setY(point.y - (point.y - this.getCameraOffset().getY()) * decimalAmount);
         }
