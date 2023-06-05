@@ -27,7 +27,7 @@ export default class Paint {
     }
 
     // arc
-    public arc({ point, radius, startAngle = 0, endAngle = Math.PI * 2, startAngleForHumans, endAngleForHumans, lineWidth = 1, strokeColor = "white", fillColor, clockwise = false }: ArcDraw): this {
+    public arc({ point, radius, startAngle = 0, endAngle = Math.PI * 2, startAngleForHumans, endAngleForHumans, lineWidth = 1, strokeColor = "white", fillColor, clockwise = false, lineDash }: ArcDraw): this {
         const ctx = this.world_math.getContext();
 
         point = this.getPointByDrawMode(point);
@@ -36,6 +36,7 @@ export default class Paint {
         endAngle = endAngleForHumans ? angleInRadians(endAngleForHumans) : endAngle;
 
         ctx.beginPath();
+        if (lineDash) ctx.setLineDash(lineDash);
         ctx.arc(point.x, point.y, radius, startAngle, endAngle, clockwise);
         ctx.strokeStyle = strokeColor;
         ctx.lineWidth = lineWidth;
@@ -44,12 +45,13 @@ export default class Paint {
             ctx.fillStyle = fillColor;
             ctx.fill();
         }
+        if (lineDash) ctx.setLineDash([]);
         ctx.closePath();
 
         return this;
     }
 
-    public circle({ point, radius, startAngle = 0, endAngle = Math.PI * 2, startAngleForHumans, endAngleForHumans, lineWidth = 1, strokeColor = "white", fillColor, clockwise = false }: CircleDraw): this {
+    public circle({ point, radius, startAngle = 0, endAngle = Math.PI * 2, startAngleForHumans, endAngleForHumans, lineWidth = 1, strokeColor = "white", fillColor, clockwise = false, lineDash }: CircleDraw): this {
         const ctx = this.world_math.getContext();
 
         point = this.getPointByDrawMode(point);
@@ -58,6 +60,7 @@ export default class Paint {
         endAngle = endAngleForHumans ? angleInRadians(endAngleForHumans) : endAngle;
 
         ctx.beginPath();
+        if (lineDash) ctx.setLineDash(lineDash);
         ctx.arc(point.x, point.y, radius, startAngle, endAngle, clockwise);
         ctx.strokeStyle = strokeColor;
         ctx.lineWidth = lineWidth;
@@ -66,24 +69,27 @@ export default class Paint {
             ctx.fillStyle = fillColor;
             ctx.fill();
         }
+        if (lineDash) ctx.setLineDash([]);
         ctx.closePath();
 
         return this;
     }
 
     // line
-    public line({ startPoint, endPoint, lineWidth = 1, strokeColor = "white" }: LineDraw): this {
+    public line({ startPoint, endPoint, lineWidth = 1, strokeColor = "white", lineDash }: LineDraw): this {
         const ctx = this.world_math.getContext();
 
         startPoint = this.getPointByDrawMode(startPoint);
         endPoint = this.getPointByDrawMode(endPoint);
 
         ctx.beginPath();
+        if (lineDash) ctx.setLineDash(lineDash);
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = strokeColor;
         ctx.moveTo(startPoint.x, startPoint.y);
         ctx.lineTo(endPoint.x, endPoint.y);
         ctx.stroke();
+        if (lineDash) ctx.setLineDash([]);
         ctx.closePath();
 
         return this;
@@ -112,13 +118,14 @@ export default class Paint {
     }
 
     // point
-    public point({ point, radius, text, color = "white", fillColor = this.world_math.getBackgroundColor(), textSize = 16, borderWidth = 4 }: PointDraw): this {
+    public point({ point, radius, text, color = "white", fillColor = this.world_math.getBackgroundColor(), textSize = 16, borderWidth = 4, lineDash }: PointDraw): this {
         const ctx = this.world_math.getContext();
 
         radius = this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius;
         point = this.getPointByDrawMode(point);
 
         ctx.beginPath();
+        if (lineDash) ctx.setLineDash(lineDash);
         ctx.strokeStyle = color;
         ctx.fillStyle = fillColor;
         ctx.lineWidth = borderWidth;
@@ -132,19 +139,21 @@ export default class Paint {
             ctx.font = "bold " + textSize + "px arial";
             ctx.fillText(text, point.x, point.y);
         }
+        if (lineDash) ctx.setLineDash([]);
         ctx.closePath();
 
         return this;
     }
 
     // rect
-    public rect({ startPoint, endPoint, lineWidth = 1, strokeColor = "white", fillColor }: RectDraw): this {
+    public rect({ startPoint, endPoint, lineWidth = 1, strokeColor = "white", fillColor, lineDash }: RectDraw): this {
         const ctx = this.world_math.getContext();
 
         startPoint = this.getPointByDrawMode(startPoint);
         endPoint = this.getPointByDrawMode(endPoint);
 
         ctx.beginPath();
+        if (lineDash) ctx.setLineDash(lineDash);
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = strokeColor;
         ctx.moveTo(startPoint.x, startPoint.y);
@@ -157,6 +166,7 @@ export default class Paint {
             ctx.fillStyle = fillColor;
             ctx.fill();
         }
+        if (lineDash) ctx.setLineDash([]);
         ctx.closePath();
 
         return this;
