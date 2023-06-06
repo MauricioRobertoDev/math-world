@@ -27,13 +27,18 @@ export default class Paint {
     }
 
     // arc
-    public arc({ point, radius, startAngle = 0, endAngle = Math.PI * 2, startAngleForHumans, endAngleForHumans, lineWidth = 1, strokeColor = "white", fillColor, clockwise = false, lineDash }: ArcDraw): this {
+    public arc({ point, radius, startAngle = 0, endAngle = Math.PI * 2, startAngleForHumans, endAngleForHumans, lineWidth = 1, strokeColor = "white", fillColor, clockwise = false, lineDash, rotate }: ArcDraw): this {
         const ctx = this.world_math.getContext();
 
         point = this.getPointByDrawMode(point);
         radius = this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius;
         startAngle = startAngleForHumans ? angleInRadians(startAngleForHumans) : startAngle;
         endAngle = endAngleForHumans ? angleInRadians(endAngleForHumans) : endAngle;
+
+        if (rotate) {
+            ctx.save();
+            ctx.rotate(rotate);
+        }
 
         ctx.beginPath();
         if (lineDash) ctx.setLineDash(lineDash);
@@ -47,17 +52,23 @@ export default class Paint {
         }
         if (lineDash) ctx.setLineDash([]);
         ctx.closePath();
+        if (rotate) ctx.restore();
 
         return this;
     }
 
-    public circle({ point, radius, startAngle = 0, endAngle = Math.PI * 2, startAngleForHumans, endAngleForHumans, lineWidth = 1, strokeColor = "white", fillColor, clockwise = false, lineDash }: CircleDraw): this {
+    public circle({ point, radius, startAngle = 0, endAngle = Math.PI * 2, startAngleForHumans, endAngleForHumans, lineWidth = 1, strokeColor = "white", fillColor, clockwise = false, lineDash, rotate }: CircleDraw): this {
         const ctx = this.world_math.getContext();
 
         point = this.getPointByDrawMode(point);
         radius = this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius;
         startAngle = startAngleForHumans ? angleInRadians(startAngleForHumans) : startAngle;
         endAngle = endAngleForHumans ? angleInRadians(endAngleForHumans) : endAngle;
+
+        if (rotate) {
+            ctx.save();
+            ctx.rotate(rotate);
+        }
 
         ctx.beginPath();
         if (lineDash) ctx.setLineDash(lineDash);
@@ -71,16 +82,34 @@ export default class Paint {
         }
         if (lineDash) ctx.setLineDash([]);
         ctx.closePath();
+        if (rotate) ctx.restore();
 
         return this;
     }
 
     // line
-    public line({ startPoint, endPoint, lineWidth = 1, strokeColor = "white", lineDash }: LineDraw): this {
+    public line({ startPoint, endPoint, lineWidth = 1, strokeColor = "white", lineDash, rotate, rotateInCenter }: LineDraw): this {
         const ctx = this.world_math.getContext();
 
         startPoint = this.getPointByDrawMode(startPoint);
         endPoint = this.getPointByDrawMode(endPoint);
+
+        if (rotateInCenter) {
+            const midPoint = {
+                x: startPoint.x * 0.5 + endPoint.x * 0.5,
+                y: startPoint.y * 0.5 + endPoint.y * 0.5,
+            };
+            console.log(midPoint);
+            ctx.save();
+            ctx.translate(midPoint.x, midPoint.y);
+            ctx.rotate(rotateInCenter);
+            ctx.translate(-midPoint.x, -midPoint.y);
+        }
+
+        if (rotate && !rotateInCenter) {
+            ctx.save();
+            ctx.rotate(rotate);
+        }
 
         ctx.beginPath();
         if (lineDash) ctx.setLineDash(lineDash);
@@ -91,15 +120,21 @@ export default class Paint {
         ctx.stroke();
         if (lineDash) ctx.setLineDash([]);
         ctx.closePath();
+        if (rotate || rotateInCenter) ctx.restore();
 
         return this;
     }
 
     // text
-    public text({ point, text, textAlign = "center", strokeWidth = 1, strokeColor, textColor = "white", textBaseline = "middle", textSize = 16 }: TextDraw): this {
+    public text({ point, text, textAlign = "center", strokeWidth = 1, strokeColor, textColor = "white", textBaseline = "middle", textSize = 16, rotate }: TextDraw): this {
         const ctx = this.world_math.getContext();
 
         point = this.getPointByDrawMode(point);
+
+        if (rotate) {
+            ctx.save();
+            ctx.rotate(rotate);
+        }
 
         ctx.beginPath();
         ctx.fillStyle = textColor;
@@ -113,16 +148,22 @@ export default class Paint {
         }
         ctx.fillText(text, point.x, point.y);
         ctx.closePath();
+        if (rotate) ctx.restore();
 
         return this;
     }
 
     // point
-    public point({ point, radius, text, color = "white", fillColor = this.world_math.getBackgroundColor(), textSize = 16, borderWidth = 4, lineDash }: PointDraw): this {
+    public point({ point, radius, text, color = "white", fillColor = this.world_math.getBackgroundColor(), textSize = 16, borderWidth = 4, lineDash, rotate }: PointDraw): this {
         const ctx = this.world_math.getContext();
 
         radius = this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius;
         point = this.getPointByDrawMode(point);
+
+        if (rotate) {
+            ctx.save();
+            ctx.rotate(rotate);
+        }
 
         ctx.beginPath();
         if (lineDash) ctx.setLineDash(lineDash);
@@ -141,26 +182,36 @@ export default class Paint {
         }
         if (lineDash) ctx.setLineDash([]);
         ctx.closePath();
+        if (rotate) ctx.restore();
 
         return this;
     }
 
     // rect
-    public rect({ startPoint, endPoint, lineWidth = 1, strokeColor = "white", fillColor, lineDash }: RectDraw): this {
+    public rect({ point, width, height, lineWidth = 1, strokeColor = "white", lineDash, fillColor, rotate, rotateInCenter }: RectDraw): this {
         const ctx = this.world_math.getContext();
 
-        startPoint = this.getPointByDrawMode(startPoint);
-        endPoint = this.getPointByDrawMode(endPoint);
+        point = this.getPointByDrawMode(point);
+        width = this.draw_mode === "cartesian" ? width * this.world_math.getGridSize() : width;
+        height = this.draw_mode === "cartesian" ? height * this.world_math.getGridSize() : height;
+
+        if (rotateInCenter) {
+            ctx.save();
+            ctx.translate(point.x + width / 2, point.y + height / 2);
+            ctx.rotate(rotateInCenter);
+            ctx.translate(-(point.x + width / 2), -(point.y + height / 2));
+        }
+
+        if (rotate && !rotateInCenter) {
+            ctx.save();
+            ctx.rotate(rotate);
+        }
 
         ctx.beginPath();
+        ctx.rect(point.x, point.y, width, height);
         if (lineDash) ctx.setLineDash(lineDash);
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = strokeColor;
-        ctx.moveTo(startPoint.x, startPoint.y);
-        ctx.lineTo(endPoint.x, startPoint.y);
-        ctx.lineTo(endPoint.x, endPoint.y);
-        ctx.lineTo(startPoint.x, endPoint.y);
-        ctx.lineTo(startPoint.x, startPoint.y);
         ctx.stroke();
         if (fillColor) {
             ctx.fillStyle = fillColor;
@@ -168,6 +219,7 @@ export default class Paint {
         }
         if (lineDash) ctx.setLineDash([]);
         ctx.closePath();
+        if (rotate || rotateInCenter) ctx.restore();
 
         return this;
     }
