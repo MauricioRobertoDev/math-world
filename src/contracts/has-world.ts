@@ -10,4 +10,6 @@ export default interface HasWorld {
     getWorldTimeInHoursMinutesAndSeconds(): string;
     getPaint(): Paint;
     worldTimeIsPaused(): boolean;
+    worldTimeInTicksIs(time: number): boolean;
+    setWorldTimeTolerance(time: number): this;
 }

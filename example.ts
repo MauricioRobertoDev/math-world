@@ -33,6 +33,16 @@ world.loop((world) => {
 
     paint.cartesian();
 
+    if (world.worldTimeInTicksIs(10)) world.pause();
+    if (world.worldTimeInTicksIs(15)) world.pause();
+    if (world.worldTimeInTicksIs(20)) world.pause();
+    if (world.worldTimeInTicksIs(25)) world.pause();
+    if (world.worldTimeInTicksIs(30)) world.pause();
+    if (world.worldTimeInTicksIs(35)) world.pause();
+    if (world.worldTimeInTicksIs(40)) world.pause();
+    if (world.worldTimeInTicksIs(45)) world.pause();
+    if (world.worldTimeInTicksIs(50)) world.pause();
+
     paint.line({ startPoint: A, endPoint: B });
     paint.text({ point: linearInterpolation2D(A, B, 0.5), text: "Radius: " + c.toFixed(2) });
 
@@ -69,3 +79,18 @@ function linearInterpolation2D(a: Vector2D, b: Vector2D, percentage: number): Ve
 
     return result;
 }
+
+(() => {
+    (document.getElementById("play") as HTMLButtonElement).addEventListener("click", () => {
+        console.log("play");
+        world.play();
+    });
+    (document.getElementById("pause") as HTMLButtonElement).addEventListener("click", () => {
+        console.log("pause");
+        world.pause();
+    });
+    (document.getElementById("reset") as HTMLButtonElement).addEventListener("click", () => {
+        console.log("reset");
+        world.reset();
+    });
+})();

@@ -5,9 +5,16 @@
         <link rel="icon" type="image/svg+xml" href="/vite.svg" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Mundo da Matemática</title>
+        <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body>
         <canvas class="app" id="app" width="500" height="500"></canvas>
+        <div class="fixed top-0 right-0 z-50 flex gap-2">
+            <a href="/" class="flex items-center jsutify-center px-2 py-1 rounded bg-white w-full">HOME</a>
+            <button class="flex items-center jsutify-center px-2 py-1 rounded bg-white w-full" id="play" type="button">PLAY</button>
+            <button class="flex items-center jsutify-center px-2 py-1 rounded bg-white w-full" id="pause" type="button">PAUSE</button>
+            <button class="flex items-center jsutify-center px-2 py-1 rounded bg-white w-full" id="reset" type="button">RESET</button>
+        </div>
         <script type="module" src="/example.ts"></script>
     </body>
 </html>

@@ -26,6 +26,7 @@ export default class MathWorld implements MathWorldContract {
     private world_time_scale = 4;
     private world_last_timestamp = 0;
     private world_time = 0;
+    private world_time_tolerance = 0.015;
 
     private canvas_element: HTMLCanvasElement;
     private canvas_context: CanvasRenderingContext2D;
@@ -810,6 +811,15 @@ export default class MathWorld implements MathWorldContract {
 
     public onStop(callback: (world: MathWorldContract) => void): this {
         this.on_stop = callback;
+        return this;
+    }
+
+    public worldTimeInTicksIs(time: number): boolean {
+        return this.getWorldTimeInTicks() >= time && this.getWorldTimeInTicks() < time + this.world_time_tolerance;
+    }
+
+    public setWorldTimeTolerance(time: number): this {
+        this.world_time_tolerance = time;
         return this;
     }
 }
