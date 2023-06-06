@@ -37,7 +37,9 @@ export default class Paint {
 
         if (rotate) {
             ctx.save();
+            ctx.translate(point.x, point.y);
             ctx.rotate(rotate);
+            ctx.translate(-point.x, -point.y);
         }
 
         ctx.beginPath();
@@ -67,7 +69,9 @@ export default class Paint {
 
         if (rotate) {
             ctx.save();
+            ctx.translate(point.x, point.y);
             ctx.rotate(rotate);
+            ctx.translate(-point.x, -point.y);
         }
 
         ctx.beginPath();
@@ -133,7 +137,9 @@ export default class Paint {
 
         if (rotate) {
             ctx.save();
+            ctx.translate(point.x, point.y);
             ctx.rotate(rotate);
+            ctx.translate(-point.x, -point.y);
         }
 
         ctx.beginPath();
@@ -162,7 +168,9 @@ export default class Paint {
 
         if (rotate) {
             ctx.save();
+            ctx.translate(point.x, point.y);
             ctx.rotate(rotate);
+            ctx.translate(-point.x, -point.y);
         }
 
         ctx.beginPath();
