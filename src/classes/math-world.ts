@@ -3,6 +3,8 @@ import { DebugMouseMode, Point } from "../types";
 import Paint from "./paint";
 import Vector2D from "./vector-2d";
 
+type Key = { code: string; key: string };
+
 export default class MathWorld implements MathWorldContract {
     private camera_is_zoomable = true;
     private camera_is_draggable = true;
@@ -61,6 +63,15 @@ export default class MathWorld implements MathWorldContract {
     private on_pause: ((world: this) => void) | null = null;
     private on_reset: ((world: this) => void) | null = null;
     private on_stop: ((world: this) => void) | null = null;
+
+    private on_key_down: { key: string; callback: (e: KeyboardEvent) => void }[] = [];
+    private on_key_up: { key: string; callback: (e: KeyboardEvent) => void }[] = [];
+
+    private on_left_click: ((e: MouseEvent) => void)[] = [];
+    private on_right_click: ((e: MouseEvent) => void)[] = [];
+    private on_mouse_move: ((e: MouseEvent) => void)[] = [];
+
+    private pressed_keys: Key[] = [];
 
     public constructor(canvasId: string) {
         const canvasElement = document.querySelector<HTMLCanvasElement>("#" + canvasId);
@@ -671,27 +682,76 @@ export default class MathWorld implements MathWorldContract {
         ctx.restore();
     }
 
+    public getPressedKeys(): Key[] {
+        return this.pressed_keys;
+    }
+
+    public keyIsPressed(key: string): boolean {
+        return this.pressed_keys.find((k) => k.key === key || k.code === key) ? true : false;
+    }
+
+    public onKeyUp(key: string, callback: (e: KeyboardEvent) => void) {
+        this.on_key_up.push({ key, callback });
+    }
+
+    public onKeyDown(key: string, callback: (e: KeyboardEvent) => void) {
+        this.on_key_down.push({ key, callback });
+    }
+
+    public onLeftCLick(callback: (e: MouseEvent) => void) {
+        this.on_left_click.push(callback);
+    }
+
+    public onRightClick(callback: (e: MouseEvent) => void) {
+        this.on_right_click.push(callback);
+    }
+
+    public onMouseMove(callback: (e: MouseEvent) => void) {
+        this.on_mouse_move.push(callback);
+    }
+
     //SETUP
 
-    private onPointerDown(e: MouseEvent) {
-        if (this.camera_is_draggable) {
-            this.camera_is_dragging = true;
-            this.camera_dragging_point.setX(e.x).setY(e.y);
+    private keyUpHandler(e: KeyboardEvent) {
+        const index = this.pressed_keys.indexOf({ key: e.key, code: e.code });
+        if (index) this.pressed_keys.splice(index, 1);
+        this.on_key_up.find((k) => k.key === e.key || e.code)?.callback(e);
+    }
+
+    private keyDownHandler(e: KeyboardEvent) {
+        if (!e.repeat) {
+            this.pressed_keys.push({ key: e.key, code: e.code });
+            this.on_key_down.find((k) => k.key === e.key || e.code)?.callback(e);
         }
     }
 
-    private onPointerUp() {
+    private mouseDownHandler(e: MouseEvent) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+
+        if (this.camera_is_draggable && this.keyIsPressed("Space")) {
+            this.camera_is_dragging = true;
+            this.camera_dragging_point.setX(e.x).setY(e.y);
+        }
+
+        if (e.button == 0 && this.on_left_click) this.on_left_click.map((callback) => callback(e));
+        if (e.button === 2 && this.on_right_click) this.on_right_click.map((callback) => callback(e));
+        return false;
+    }
+
+    private mouseUpHandler() {
         if (this.camera_is_draggable) {
             this.camera_is_dragging = false;
         }
     }
 
-    private onPointerMove(e: MouseEvent) {
+    private mouseMoveHandler(e: MouseEvent) {
         if (this.camera_is_draggable && this.camera_is_dragging) {
             this.getCameraOffset().setX(this.getCameraOffset().getX() + e.clientX - this.camera_dragging_point.getX());
             this.getCameraOffset().setY(this.getCameraOffset().getY() + e.clientY - this.camera_dragging_point.getY());
             this.camera_dragging_point.setX(e.clientX).setY(e.clientY);
         }
+        this.on_mouse_move.map((callback) => callback(e));
     }
 
     private adjustZoomAtMousePoint(e: WheelEvent) {
@@ -723,11 +783,13 @@ export default class MathWorld implements MathWorldContract {
     }
 
     private setupEvents(): void {
-        this.getCanvas().addEventListener("mousedown", (e) => this.onPointerDown(e));
-        this.getCanvas().addEventListener("mousemove", (e) => this.onPointerMove(e));
+        this.getCanvas().addEventListener("mousedown", (e) => this.mouseDownHandler(e));
+        this.getCanvas().addEventListener("mousemove", (e) => this.mouseMoveHandler(e));
         this.getCanvas().addEventListener("mousemove", (e) => this.setMousePosition(e));
-        this.getCanvas().addEventListener("mouseup", () => this.onPointerUp());
+        this.getCanvas().addEventListener("mouseup", () => this.mouseUpHandler());
         this.getCanvas().addEventListener("wheel", (e) => this.adjustZoomAtMousePoint(e));
+        document.addEventListener("keyup", (e) => this.keyUpHandler(e));
+        document.addEventListener("keydown", (e) => this.keyDownHandler(e));
     }
 
     private update(timestamp = 0): void {
@@ -805,6 +867,7 @@ export default class MathWorld implements MathWorldContract {
     }
 
     public onReset(callback: (world: MathWorldContract) => void): this {
+        this.resetWorldTime();
         this.on_reset = callback;
         return this;
     }

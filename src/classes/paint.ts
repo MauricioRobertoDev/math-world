@@ -103,7 +103,6 @@ export default class Paint {
                 x: startPoint.x * 0.5 + endPoint.x * 0.5,
                 y: startPoint.y * 0.5 + endPoint.y * 0.5,
             };
-            console.log(midPoint);
             ctx.save();
             ctx.translate(midPoint.x, midPoint.y);
             ctx.rotate(rotateInCenter);
