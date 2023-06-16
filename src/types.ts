@@ -36,6 +36,17 @@ export type CircleDraw = {
     rotate?: number;
 };
 
+export type CapsuleDraw = {
+    start: Vector2D | Point;
+    end: Vector2D | Point;
+    radius: number;
+    lineWidth?: number;
+    strokeColor?: string | CanvasGradient | CanvasPattern;
+    fillColor?: string | CanvasGradient | CanvasPattern;
+    lineDash?: number[];
+    rotate?: number;
+};
+
 export type RectDraw = {
     point: Vector2D | Point;
     width: number;

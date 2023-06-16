@@ -1,5 +1,6 @@
 import MathWorldContract from "../contracts/math-world-base";
-import { ArcDraw, CircleDraw, LineDraw, PaintDrawMode, Point, PointDraw, RectDraw, TextDraw } from "../types";
+import { ArcDraw, CapsuleDraw, CircleDraw, LineDraw, PaintDrawMode, Point, PointDraw, RectDraw, TextDraw } from "../types";
+import Vector2D from "./vector-2d";
 
 export default class Paint {
     private draw_mode: PaintDrawMode = "off";
@@ -32,8 +33,8 @@ export default class Paint {
 
         point = this.getPointByDrawMode(point);
         radius = this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius;
-        startAngle = startAngleForHumans ? angleInRadians(startAngleForHumans) : startAngle;
-        endAngle = endAngleForHumans ? angleInRadians(endAngleForHumans) : endAngle;
+        startAngle = startAngleForHumans ? -angleInRadians(startAngleForHumans) : startAngle;
+        endAngle = endAngleForHumans ? -angleInRadians(endAngleForHumans) : endAngle;
 
         if (rotate) {
             ctx.save();
@@ -44,7 +45,7 @@ export default class Paint {
 
         ctx.beginPath();
         if (lineDash) ctx.setLineDash(lineDash);
-        ctx.arc(point.x, point.y, radius, startAngle, endAngle, clockwise);
+        ctx.arc(point.x, point.y, radius, startAngle, endAngle, endAngleForHumans ? true : clockwise);
         ctx.strokeStyle = strokeColor;
         ctx.lineWidth = lineWidth;
         ctx.stroke();
@@ -64,8 +65,8 @@ export default class Paint {
 
         point = this.getPointByDrawMode(point);
         radius = this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius;
-        startAngle = startAngleForHumans ? angleInRadians(startAngleForHumans) : startAngle;
-        endAngle = endAngleForHumans ? angleInRadians(endAngleForHumans) : endAngle;
+        startAngle = startAngleForHumans ? -angleInRadians(startAngleForHumans) : startAngle;
+        endAngle = endAngleForHumans ? -angleInRadians(endAngleForHumans) : endAngle;
 
         if (rotate) {
             ctx.save();
@@ -76,10 +77,53 @@ export default class Paint {
 
         ctx.beginPath();
         if (lineDash) ctx.setLineDash(lineDash);
-        ctx.arc(point.x, point.y, radius, startAngle, endAngle, clockwise);
+        ctx.arc(point.x, point.y, radius, startAngle, endAngle, endAngleForHumans ? true : clockwise);
         ctx.strokeStyle = strokeColor;
         ctx.lineWidth = lineWidth;
         ctx.stroke();
+        if (fillColor) {
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+        }
+        if (lineDash) ctx.setLineDash([]);
+        ctx.closePath();
+        if (rotate) ctx.restore();
+
+        return this;
+    }
+
+    public capsule({ start, end, radius, lineWidth = 1, strokeColor = "white", fillColor, lineDash, rotate }: CapsuleDraw): this {
+        start = this.getPointByDrawMode(start);
+        end = this.getPointByDrawMode(end);
+        radius = this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius;
+        const center = new Vector2D((Math.min(start.x, end.x) + Math.max(start.x, end.x)) / 2, (Math.min(start.y, end.y) + Math.max(start.y, end.y)) / 2);
+        const angleRadians = Math.atan2(end.y - start.y, end.x - start.x);
+        const ctx = this.world_math.getContext();
+
+        if (rotate) {
+            ctx.save();
+            ctx.translate(center.x, center.y);
+            ctx.rotate(rotate);
+            ctx.translate(-center.x, -center.y);
+        }
+        ctx.beginPath();
+        if (lineDash) ctx.setLineDash(lineDash);
+
+        ctx.arc(start.x, start.y, radius, angleRadians + Math.PI / 2, angleRadians - Math.PI / 2);
+        ctx.arc(end.x, end.y, radius, angleRadians - Math.PI / 2, angleRadians + Math.PI / 2);
+
+        const cos = Math.cos(angleRadians + Math.PI / 2);
+        const sin = Math.sin(angleRadians + Math.PI / 2);
+        const A = { x: start.x + cos * radius, y: start.y + sin * radius };
+        const B = { x: end.x + cos * radius, y: end.y + sin * radius };
+
+        ctx.moveTo(A.x, A.y);
+        ctx.lineTo(B.x, B.y);
+
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = lineWidth;
+        ctx.stroke();
+
         if (fillColor) {
             ctx.fillStyle = fillColor;
             ctx.fill();
