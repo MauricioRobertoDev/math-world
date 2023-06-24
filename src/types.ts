@@ -92,3 +92,6 @@ export type PointDraw = {
     lineDash?: number[];
     rotate?: number;
 };
+
+export type TailwindColorName = "Slate" | "Gray" | "Zinc" | "Neutral" | "Stone" | "Red" | "Orange" | "Amber" | "Yellow" | "Lime" | "Green" | "Emerald" | "Teal" | "Cyan" | "Sky" | "Blue" | "Indigo" | "Violet" | "Purple" | "Fuchsia" | "Pink" | "Rose";
+export type TailwindColorValue = "50" | "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900" | "950";

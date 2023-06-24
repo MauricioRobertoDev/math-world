@@ -1,5 +1,6 @@
+import { TAILWIND_COLORS } from "../constants/tailwindcss";
 import MathWorldContract from "../contracts/math-world-base";
-import { ArcDraw, CapsuleDraw, CircleDraw, LineDraw, PaintDrawMode, Point, PointDraw, RectDraw, TextDraw } from "../types";
+import { ArcDraw, CapsuleDraw, CircleDraw, LineDraw, PaintDrawMode, Point, PointDraw, RectDraw, TailwindColorName, TailwindColorValue, TextDraw } from "../types";
 import Vector2D from "./vector-2d";
 
 export default class Paint {
@@ -62,6 +63,7 @@ export default class Paint {
         return this;
     }
 
+    // circle
     public circle({ point, radius, startAngle = 0, endAngle = Math.PI * 2, startAngleForHumans, endAngleForHumans, lineWidth = 1, strokeColor = "white", fillColor, clockwise = false, lineDash, rotate }: CircleDraw): this {
         const ctx = this.world_math.getContext();
 
@@ -96,6 +98,7 @@ export default class Paint {
         return this;
     }
 
+    // capsule
     public capsule({ start, end, radius, lineWidth = 1, strokeColor = "white", fillColor, lineDash, rotate }: CapsuleDraw): this {
         start = this.getPointByDrawMode(start);
         end = this.getPointByDrawMode(end);
@@ -297,6 +300,15 @@ export default class Paint {
         if (this.draw_mode === "cartesian") return this.world_math.toCartesian(point);
         if (this.draw_mode === "world") return this.world_math.toWorld(point);
         return point;
+    }
+
+    public getTailwindColor(name: TailwindColorName, value: TailwindColorValue = "500", opacity = 100): string {
+        if (opacity < 0 || opacity > 100) throw new Error("Opacidade é um valor de porcentagem portando deve estar entre 0% e 100%");
+        opacity = opacity / 100;
+
+        const color = TAILWIND_COLORS[name][value];
+
+        return `rgba(${color[0]},${color[1]},${color[2]},${opacity})`;
     }
 }
 

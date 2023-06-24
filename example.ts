@@ -93,15 +93,3 @@ function linearInterpolation2D(a: Vector2D, b: Vector2D, percentage: number): Ve
         world.reset();
     });
 })();
-
-world.onKeyUp(
-    "x",
-    () => console.log("x1"),
-    () => console.log("x2")
-);
-
-world.onKeyUp(
-    "x",
-    () => console.log("x3"),
-    () => console.log("x4")
-);
