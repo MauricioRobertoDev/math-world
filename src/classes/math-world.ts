@@ -64,14 +64,19 @@ export default class MathWorld implements MathWorldContract {
     private on_reset: ((world: this) => void) | null = null;
     private on_stop: ((world: this) => void) | null = null;
 
-    private on_key_down: { key: string; callback: (e: KeyboardEvent) => void }[] = [];
-    private on_key_up: { key: string; callback: (e: KeyboardEvent) => void }[] = [];
+    private on_key_down: { key: string; callbacks: ((e: KeyboardEvent) => void)[] }[] = [];
+    private on_key_up: { key: string; callbacks: ((e: KeyboardEvent) => void)[] }[] = [];
 
     private on_left_click: ((e: MouseEvent) => void)[] = [];
     private on_right_click: ((e: MouseEvent) => void)[] = [];
     private on_mouse_move: ((e: MouseEvent) => void)[] = [];
+    private on_mouse_down: ((e: MouseEvent) => void)[] = [];
+    private on_mouse_up: ((e: MouseEvent) => void)[] = [];
+    private on_mouse_wheel: ((e: WheelEvent) => void)[] = [];
 
     private pressed_keys: Key[] = [];
+
+    private master_key = "Alt";
 
     public constructor(canvasId: string) {
         const canvasElement = document.querySelector<HTMLCanvasElement>("#" + canvasId);
@@ -135,6 +140,11 @@ export default class MathWorld implements MathWorldContract {
         this.setCameraMinZoom(25);
         this.setCameraMaxZoom(500);
         this.setWorldTimeScale(4);
+        return this;
+    }
+
+    public setMasterKey(key: string): this {
+        this.master_key = key;
         return this;
     }
 
@@ -401,6 +411,8 @@ export default class MathWorld implements MathWorldContract {
         this.canvas_element.style.position = "fixed";
         this.canvas_element.style.top = "0px";
         this.canvas_element.style.left = "0px";
+        this.canvas_element.style.padding = "0px";
+        this.canvas_element.style.margin = "0px";
         this.setWidth(window.innerWidth).setHeight(window.innerHeight);
         return this;
     }
@@ -487,7 +499,7 @@ export default class MathWorld implements MathWorldContract {
         return this;
     }
 
-    private getCameraZoomInDecimal(): number {
+    public getCameraZoomInDecimal(): number {
         return this.camera_zoom_current / 100;
     }
 
@@ -690,24 +702,41 @@ export default class MathWorld implements MathWorldContract {
         return this.pressed_keys.find((k) => k.key === key || k.code === key) ? true : false;
     }
 
-    public onKeyUp(key: string, callback: (e: KeyboardEvent) => void) {
-        this.on_key_up.push({ key, callback });
+    public onKeyUp(key: string, ...callback: ((e: KeyboardEvent) => void)[]) {
+        const keyAndCallbacks = this.on_key_up.find((k) => k.key === key);
+        if (keyAndCallbacks) keyAndCallbacks.callbacks.push(...callback);
+        if (!keyAndCallbacks) this.on_key_up.push({ key, callbacks: callback });
     }
 
-    public onKeyDown(key: string, callback: (e: KeyboardEvent) => void) {
-        this.on_key_down.push({ key, callback });
+    public onKeyDown(key: string, ...callback: ((e: KeyboardEvent) => void)[]) {
+        const keyAndCallbacks = this.on_key_down.find((k) => k.key === key);
+        if (keyAndCallbacks) keyAndCallbacks.callbacks.push(...callback);
+        if (!keyAndCallbacks) this.on_key_down.push({ key, callbacks: callback });
     }
 
-    public onLeftCLick(callback: (e: MouseEvent) => void) {
-        this.on_left_click.push(callback);
+    public onLeftCLick(...callback: ((e: MouseEvent) => void)[]) {
+        this.on_left_click.push(...callback);
     }
 
-    public onRightClick(callback: (e: MouseEvent) => void) {
-        this.on_right_click.push(callback);
+    public onRightClick(...callback: ((e: MouseEvent) => void)[]) {
+        this.on_right_click.push(...callback);
     }
 
-    public onMouseMove(callback: (e: MouseEvent) => void) {
-        this.on_mouse_move.push(callback);
+    public onMouseMove(...callback: ((e: MouseEvent) => void)[]) {
+        this.on_mouse_move.push(...callback);
+    }
+
+    public onMouseUp(...callback: ((e: MouseEvent) => void)[]) {
+        this.on_mouse_up.push(...callback);
+    }
+
+    public onMouseDown(...callback: ((e: MouseEvent) => void)[]) {
+        this.on_mouse_down.push(...callback);
+    }
+
+    // public onMouseWheel(callback: (e: MouseEvent) => void) {
+    public onMouseWheel(...callback: ((e: MouseEvent) => void)[]) {
+        this.on_mouse_wheel.push(...callback);
     }
 
     //SETUP
@@ -715,34 +744,44 @@ export default class MathWorld implements MathWorldContract {
     private keyUpHandler(e: KeyboardEvent) {
         const index = this.pressed_keys.indexOf({ key: e.key, code: e.code });
         if (index) this.pressed_keys.splice(index, 1);
-        this.on_key_up.find((k) => k.key === e.key || e.code)?.callback(e);
+        const keyAndCallbacks = this.on_key_up.find((k) => k.key === e.key || k.key === e.code);
+        if (keyAndCallbacks) keyAndCallbacks.callbacks.map((callback) => callback(e));
     }
 
     private keyDownHandler(e: KeyboardEvent) {
         if (!e.repeat) {
             this.pressed_keys.push({ key: e.key, code: e.code });
-            this.on_key_down.find((k) => k.key === e.key || e.code)?.callback(e);
+            const keyAndCallbacks = this.on_key_down.find((k) => k.key === e.key || k.key === e.code);
+            if (keyAndCallbacks) keyAndCallbacks.callbacks.map((callback) => callback(e));
         }
+    }
+
+    private mouseWheelHandler(e: WheelEvent) {
+        this.adjustZoomAtMousePoint(e);
+        this.on_mouse_wheel.map((callback) => callback(e));
     }
 
     private mouseDownHandler(e: MouseEvent) {
         e.stopImmediatePropagation();
         e.preventDefault();
 
-        if (this.camera_is_draggable && this.keyIsPressed("Space")) {
+        if (this.camera_is_draggable && this.keyIsPressed(this.master_key)) {
             this.camera_is_dragging = true;
             this.camera_dragging_point.setX(e.x).setY(e.y);
         }
 
         if (e.button == 0 && this.on_left_click) this.on_left_click.map((callback) => callback(e));
         if (e.button === 2 && this.on_right_click) this.on_right_click.map((callback) => callback(e));
+
+        this.on_mouse_down.map((callback) => callback(e));
         return false;
     }
 
-    private mouseUpHandler() {
+    private mouseUpHandler(e: MouseEvent) {
         if (this.camera_is_draggable) {
             this.camera_is_dragging = false;
         }
+        this.on_mouse_up.map((callback) => callback(e));
     }
 
     private mouseMoveHandler(e: MouseEvent) {
@@ -755,7 +794,7 @@ export default class MathWorld implements MathWorldContract {
     }
 
     private adjustZoomAtMousePoint(e: WheelEvent) {
-        if (this.camera_is_zoomable) {
+        if (this.camera_is_zoomable && this.keyIsPressed(this.master_key)) {
             e.preventDefault();
             const scale_factor = this.camera_zoom_factor / 100 + 1; // 10 / 100 + 1 = 1.1 = 110%
             if (-e.deltaY > 0) this.zoomAtWithDecimal(scale_factor, this.getMousePositionInScreen());
@@ -786,8 +825,8 @@ export default class MathWorld implements MathWorldContract {
         this.getCanvas().addEventListener("mousedown", (e) => this.mouseDownHandler(e));
         this.getCanvas().addEventListener("mousemove", (e) => this.mouseMoveHandler(e));
         this.getCanvas().addEventListener("mousemove", (e) => this.setMousePosition(e));
-        this.getCanvas().addEventListener("mouseup", () => this.mouseUpHandler());
-        this.getCanvas().addEventListener("wheel", (e) => this.adjustZoomAtMousePoint(e));
+        this.getCanvas().addEventListener("mouseup", (e) => this.mouseUpHandler(e));
+        this.getCanvas().addEventListener("wheel", (e) => this.mouseWheelHandler(e));
         document.addEventListener("keyup", (e) => this.keyUpHandler(e));
         document.addEventListener("keydown", (e) => this.keyDownHandler(e));
     }
@@ -831,12 +870,6 @@ export default class MathWorld implements MathWorldContract {
 
     public toWorld(point: Vector2D | Point): Vector2D | Point {
         const realPoint = { x: point.x, y: -point.y };
-        if (point instanceof Vector2D) return Vector2D.fromPoint(realPoint);
-        return realPoint;
-    }
-
-    public toScreen(point: Vector2D | Point): Vector2D | Point {
-        const realPoint = { x: (point.x - this.getCameraOffset().getX()) / this.getCameraZoomInDecimal(), y: (point.y - this.getCameraOffset().getY()) / this.getCameraZoomInDecimal() };
         if (point instanceof Vector2D) return Vector2D.fromPoint(realPoint);
         return realPoint;
     }
