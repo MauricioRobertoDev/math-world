@@ -23,4 +23,6 @@ export default interface HasCamera {
     moveCameraToCartesianPlane(point: Vector2D | Point): this;
     moveCameraToWorld(point: Vector2D | Point): this;
     getMiddleScreen(): Vector2D;
+    getCameraOffset(): Vector2D;
+    getCameraZoomInDecimal(): number;
 }
