@@ -8,7 +8,12 @@ world.setPositiveX(1);
 world.setPositiveY(1);
 world.setNegativeX(1);
 world.setNegativeY(1);
-world.enableWorldTimePrecisionMode();
+world.enableWorldPrecisionTimeMode();
+world.pause();
+world.setWorldPrecisionTimeFrameInMiniTimes(250);
+// world.setWorldPrecisionTimeFrameInFraction(0.5);
+
+// world.setWorldPrecisionTimeFrameInMiniTime(2000);
 // world.setWorldTimeScale(1);
 
 let theta = Math.PI / 4;
@@ -72,18 +77,14 @@ function linearInterpolation2D(a: Vector2D, b: Vector2D, percentage: number): Ve
 }
 
 (() => {
-    (document.getElementById("play") as HTMLButtonElement).addEventListener("click", () => {
-        console.log("play");
-        world.play();
-    });
-    (document.getElementById("pause") as HTMLButtonElement).addEventListener("click", () => {
-        console.log("pause");
-        world.pause();
-    });
-    (document.getElementById("reset") as HTMLButtonElement).addEventListener("click", () => {
-        console.log("reset");
-        world.reset();
-    });
+    (document.getElementById("play") as HTMLButtonElement).addEventListener("click", () => world.play());
+    (document.getElementById("pause") as HTMLButtonElement).addEventListener("click", () => world.pause());
+    (document.getElementById("reset") as HTMLButtonElement).addEventListener("click", () => world.reset());
+
+    (document.getElementById("back-time") as HTMLButtonElement).addEventListener("click", () => world.backWoldTime());
+    (document.getElementById("back-frame") as HTMLButtonElement).addEventListener("click", () => world.backFrameWorldTime());
+    (document.getElementById("next-frame") as HTMLButtonElement).addEventListener("click", () => world.nextFramwWorldTime());
+    (document.getElementById("next-time") as HTMLButtonElement).addEventListener("click", () => world.nextWorldTime());
 })();
 
 // console.log(1000 % 2500);

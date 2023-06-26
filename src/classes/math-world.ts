@@ -100,7 +100,6 @@ export default class MathWorld implements MathWorldContract {
 
     public start(): void {
         this.calculateScreenOrigin();
-        this.play();
         this.canvasPlay();
         this.setupEvents();
         this.update();
@@ -286,7 +285,7 @@ export default class MathWorld implements MathWorldContract {
 
     // WORLD
     public getWorldTime(): number {
-        return this.world_time;
+        return this.getWorldTimeInTicks();
     }
 
     public getWorldTimeInTicks(): number {
@@ -840,9 +839,17 @@ export default class MathWorld implements MathWorldContract {
 
         if (this.canvasIsRunning()) requestAnimationFrame(this.update.bind(this));
 
-        if (!this.world_time_is_paused) this.world_time += (timestamp - this.world_last_timestamp) * this.world_time_scale;
-
-        this.world_last_timestamp = timestamp;
+        if (!this.world_time_is_paused) {
+            if (this.world_time_precision_mode) {
+                if (timestamp - this.world_last_timestamp >= this.world_time_precision_frame_delay) {
+                    this.world_time += this.world_time_precision_frame;
+                    this.world_last_timestamp = timestamp;
+                }
+            } else {
+                this.world_time += (timestamp - this.world_last_timestamp) * this.world_time_scale;
+                this.world_last_timestamp = timestamp;
+            }
+        }
 
         const current_frame_time = performance.now();
         const elapsed = current_frame_time - this.canvas_last_frame_time;
@@ -914,8 +921,17 @@ export default class MathWorld implements MathWorldContract {
         return this;
     }
 
+    public worldTimeInMiniTimesIs(time: number): boolean {
+        return this.getWorldInMiniTimes() >= time && this.getWorldInMiniTimes() < time + this.world_time_tolerance;
+    }
+
     public worldTimeInTicksIs(time: number): boolean {
         return this.getWorldTimeInTicks() >= time && this.getWorldTimeInTicks() < time + this.world_time_tolerance;
+    }
+
+    public worldTimeIs(time: number, tolerance = false): boolean {
+        if (tolerance) return this.getWorldTime() >= time && this.getWorldTime() < time + this.world_time_tolerance;
+        return this.getWorldTime() === time;
     }
 
     public setWorldTimeTolerance(time: number): this {
@@ -923,13 +939,13 @@ export default class MathWorld implements MathWorldContract {
         return this;
     }
 
-    public enableWorldTimePrecisionMode(): this {
+    public enableWorldPrecisionTimeMode(): this {
         this.world_time_precision_mode = true;
         this.world_time = 0;
         return this;
     }
 
-    public disableWorldTimePrecisionMode(): this {
+    public disableWorldPrecisionTimeMode(): this {
         this.world_time_precision_mode = false;
         this.world_time = 0;
         return this;
@@ -938,7 +954,7 @@ export default class MathWorld implements MathWorldContract {
     /**
      * a fração é deve ser um número represantando uma porcentagem onde 1 equivale a 1 tempo por frame.
      */
-    public setWorldTimePrecisionFrameInFraction(fraction: number): this {
+    public setWorldPrecisionTimeFrameInFraction(fraction: number): this {
         if (this.world_time_precision_mode) {
             if (100 % fraction > 0) throw new Error("A fração de tempo deve ser um número que seja divisor perfeito de 100");
             this.world_time_precision_frame = 1000 * fraction;
@@ -947,14 +963,14 @@ export default class MathWorld implements MathWorldContract {
         return this;
     }
 
-    public getWorldTimePrecisionFrameInFraction(): number {
+    public getWorldPrecisionTimeFrameInFraction(): number {
         return 1000 / this.world_time_precision_frame;
     }
 
     /**
      * 1 tempo é igual a 1000 minitimes
      */
-    public getWorldTimePrecisionFrameInMiniTime(): number {
+    public getWorldPrecisionTimeFrameInMiniTime(): number {
         return this.world_time_precision_frame;
     }
 
@@ -963,18 +979,18 @@ export default class MathWorld implements MathWorldContract {
      *
      * Você pode setar livremente a quantidade porèm lembre-se que a cada loop será adicionado esse número ao tempo então dê preferências a números divisores perfeitos de 1000, para facilitar as suas contas
      */
-    public setWorldTimePrecisionFrameInMiniTime(minitimes: number): this {
+    public setWorldPrecisionTimeFrameInMiniTimes(minitimes: number): this {
         this.world_time_precision_frame = minitimes;
         return this;
     }
 
-    public setWorldTimePrecisionFrameDelay(seconds: number): this {
+    public setWorldPrecisionTimeFrameDelay(seconds: number): this {
         this.world_time_precision_frame_delay = seconds * 1000;
         return this;
     }
 
     public nextWorldTime(): this {
-        this.world_time = Math.ceil(this.world_time);
+        this.world_time = (Math.floor(this.world_time / 1000) + 1) * 1000;
         return this;
     }
 
@@ -984,16 +1000,34 @@ export default class MathWorld implements MathWorldContract {
     }
 
     public backWoldTime(): this {
-        this.world_time = Math.floor(this.world_time);
+        const newTime = (this.world_time = (Math.ceil(this.world_time / 1000) - 1) * 1000);
+        this.world_time = newTime > 0 ? newTime : 0;
         return this;
     }
 
     public backFrameWorldTime(): this {
-        this.world_time -= this.world_time_precision_frame;
+        const newTime = this.world_time - this.world_time_precision_frame;
+        this.world_time = newTime > 0 ? newTime : 0;
         return this;
     }
 
-    public getWorldTimePrecisionFrameDelay(): number {
-        return this.world_time_precision_frame_delay;
+    public setWorldPrecisionTimeInMinitimes(minitimes: number): this {
+        this.world_time = minitimes;
+        return this;
+    }
+
+    public setWorldPrecisionTimeInSecondsMinutesAndHours(seconds: number, minutes = 0, hours = 0): this {
+        let minitimes = 0;
+
+        minitimes += seconds * 1000;
+        minitimes += minutes * 60 * 1000;
+        minitimes += hours * 60 * 60 * 1000;
+
+        this.world_time = minitimes;
+        return this;
+    }
+
+    public getWorldInMiniTimes(): number {
+        return this.world_time;
     }
 }

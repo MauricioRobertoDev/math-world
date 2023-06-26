@@ -1,22 +1,31 @@
 import Paint from "../classes/paint";
 
 export default interface HasWorld {
+    getPaint(): Paint;
     getWorldTime(): number;
     getWorldTimeInTicks(): number;
-    setWorldTimeScale(scale: number): this;
+    getWorldInMiniTimes(): number;
+    getWorldTimeInHoursMinutesAndSeconds(): string;
+
+    playWorldTime(): this;
     pauseWorldTime(): this;
     resetWorldTime(): this;
-    playWorldTime(): this;
-    getWorldTimeInHoursMinutesAndSeconds(): string;
-    getPaint(): Paint;
+
     worldTimeIsPaused(): boolean;
     worldTimeInTicksIs(time: number): boolean;
+
+    setWorldTimeScale(scale: number): this;
     setWorldTimeTolerance(time: number): this;
-    enableWorldTimePrecisionMode(): this;
-    disableWorldTimePrecisionMode(): this;
-    setWorldTimePrecisionFrameInFraction(fraction: number): this;
-    setWorldTimePrecisionFrameInMiniTime(minitimes: number): this;
-    setWorldTimePrecisionFrameDelay(seconds: number): this;
+
+    enableWorldPrecisionTimeMode(): this;
+    disableWorldPrecisionTimeMode(): this;
+
+    setWorldPrecisionTimeFrameInFraction(fraction: number): this;
+    setWorldPrecisionTimeFrameInMiniTimes(minitimes: number): this;
+    setWorldPrecisionTimeFrameDelay(seconds: number): this;
+    setWorldPrecisionTimeInMinitimes(minitimes: number): this;
+    setWorldPrecisionTimeInSecondsMinutesAndHours(seconds: number, minutes: number, hours: number): this;
+
     nextWorldTime(): this;
     nextFramwWorldTime(): this;
     backWoldTime(): this;
