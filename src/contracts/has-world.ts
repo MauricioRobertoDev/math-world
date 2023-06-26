@@ -12,4 +12,13 @@ export default interface HasWorld {
     worldTimeIsPaused(): boolean;
     worldTimeInTicksIs(time: number): boolean;
     setWorldTimeTolerance(time: number): this;
+    enableWorldTimePrecisionMode(): this;
+    disableWorldTimePrecisionMode(): this;
+    setWorldTimePrecisionFrameInFraction(fraction: number): this;
+    setWorldTimePrecisionFrameInMiniTime(minitimes: number): this;
+    setWorldTimePrecisionFrameDelay(seconds: number): this;
+    nextWorldTime(): this;
+    nextFramwWorldTime(): this;
+    backWoldTime(): this;
+    backFrameWorldTime(): this;
 }

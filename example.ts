@@ -8,6 +8,8 @@ world.setPositiveX(1);
 world.setPositiveY(1);
 world.setNegativeX(1);
 world.setNegativeY(1);
+world.enableWorldTimePrecisionMode();
+// world.setWorldTimeScale(1);
 
 let theta = Math.PI / 4;
 const c = 1;
@@ -29,16 +31,6 @@ world.loop((world) => {
     const cos = Math.cos(theta);
     const tan = Math.tan(theta);
     const T = new Vector2D(Math.sign(cos) * Math.hypot(1, tan) * c, 0);
-
-    if (world.worldTimeInTicksIs(10)) world.pause();
-    if (world.worldTimeInTicksIs(15)) world.pause();
-    if (world.worldTimeInTicksIs(20)) world.pause();
-    if (world.worldTimeInTicksIs(25)) world.pause();
-    if (world.worldTimeInTicksIs(30)) world.pause();
-    if (world.worldTimeInTicksIs(35)) world.pause();
-    if (world.worldTimeInTicksIs(40)) world.pause();
-    if (world.worldTimeInTicksIs(45)) world.pause();
-    if (world.worldTimeInTicksIs(50)) world.pause();
 
     paint.cartesian();
 
@@ -93,3 +85,5 @@ function linearInterpolation2D(a: Vector2D, b: Vector2D, percentage: number): Ve
         world.reset();
     });
 })();
+
+// console.log(1000 % 2500);

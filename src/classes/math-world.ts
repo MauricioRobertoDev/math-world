@@ -29,6 +29,10 @@ export default class MathWorld implements MathWorldContract {
     private world_last_timestamp = 0;
     private world_time = 0;
     private world_time_tolerance = 0.015;
+    private world_time_precision_mode = false;
+    private world_time_precision_frame = 1000;
+    private world_time_precision_frame_delay = 1000;
+    // private world_time_precision_frame_last_update = 0;
 
     private canvas_element: HTMLCanvasElement;
     private canvas_context: CanvasRenderingContext2D;
@@ -917,5 +921,79 @@ export default class MathWorld implements MathWorldContract {
     public setWorldTimeTolerance(time: number): this {
         this.world_time_tolerance = time;
         return this;
+    }
+
+    public enableWorldTimePrecisionMode(): this {
+        this.world_time_precision_mode = true;
+        this.world_time = 0;
+        return this;
+    }
+
+    public disableWorldTimePrecisionMode(): this {
+        this.world_time_precision_mode = false;
+        this.world_time = 0;
+        return this;
+    }
+
+    /**
+     * a fração é deve ser um número represantando uma porcentagem onde 1 equivale a 1 tempo por frame.
+     */
+    public setWorldTimePrecisionFrameInFraction(fraction: number): this {
+        if (this.world_time_precision_mode) {
+            if (100 % fraction > 0) throw new Error("A fração de tempo deve ser um número que seja divisor perfeito de 100");
+            this.world_time_precision_frame = 1000 * fraction;
+        }
+
+        return this;
+    }
+
+    public getWorldTimePrecisionFrameInFraction(): number {
+        return 1000 / this.world_time_precision_frame;
+    }
+
+    /**
+     * 1 tempo é igual a 1000 minitimes
+     */
+    public getWorldTimePrecisionFrameInMiniTime(): number {
+        return this.world_time_precision_frame;
+    }
+
+    /**
+     * 1 time é igual a 1000 minitimes
+     *
+     * Você pode setar livremente a quantidade porèm lembre-se que a cada loop será adicionado esse número ao tempo então dê preferências a números divisores perfeitos de 1000, para facilitar as suas contas
+     */
+    public setWorldTimePrecisionFrameInMiniTime(minitimes: number): this {
+        this.world_time_precision_frame = minitimes;
+        return this;
+    }
+
+    public setWorldTimePrecisionFrameDelay(seconds: number): this {
+        this.world_time_precision_frame_delay = seconds * 1000;
+        return this;
+    }
+
+    public nextWorldTime(): this {
+        this.world_time = Math.ceil(this.world_time);
+        return this;
+    }
+
+    public nextFramwWorldTime(): this {
+        this.world_time += this.world_time_precision_frame;
+        return this;
+    }
+
+    public backWoldTime(): this {
+        this.world_time = Math.floor(this.world_time);
+        return this;
+    }
+
+    public backFrameWorldTime(): this {
+        this.world_time -= this.world_time_precision_frame;
+        return this;
+    }
+
+    public getWorldTimePrecisionFrameDelay(): number {
+        return this.world_time_precision_frame_delay;
     }
 }
