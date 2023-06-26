@@ -34,7 +34,9 @@ export default class MathWorld implements MathWorldContract {
     private world_time_precision_frame_delay = 1000;
     // private world_time_precision_frame_last_update = 0;
 
+    private canvas_id: string;
     private canvas_element: HTMLCanvasElement;
+    private canvas_element_original: Node;
     private canvas_context: CanvasRenderingContext2D;
     private canvas_time = 0;
     private canvas_is_running = true;
@@ -47,6 +49,7 @@ export default class MathWorld implements MathWorldContract {
     private canvas_last_frame_time = 0;
     private canvas_draw_info = true;
     private canvas_paint: Paint;
+    private canvas_fullscreen = false;
 
     private cartesian_plane_grid_size = 32;
     private cartesian_plane_negativeX = 0;
@@ -85,7 +88,9 @@ export default class MathWorld implements MathWorldContract {
     public constructor(canvasId: string) {
         const canvasElement = document.querySelector<HTMLCanvasElement>("#" + canvasId);
         if (!canvasElement) throw new Error("Não existe nenhum canvas com o id: " + canvasId);
+        this.canvas_id = canvasId;
         this.canvas_element = canvasElement;
+        this.canvas_element_original = canvasElement.cloneNode(true);
         this.canvas_context = this.canvas_element.getContext("2d") as CanvasRenderingContext2D;
         this.canvas_width = this.canvas_element.width;
         this.canvas_height = this.canvas_element.height;
@@ -416,7 +421,35 @@ export default class MathWorld implements MathWorldContract {
         this.canvas_element.style.left = "0px";
         this.canvas_element.style.padding = "0px";
         this.canvas_element.style.margin = "0px";
+
         this.setWidth(window.innerWidth).setHeight(window.innerHeight);
+
+        this.canvas_fullscreen = true;
+
+        return this;
+    }
+
+    public resetFullScreen(): this {
+        const parent = this.canvas_element.parentNode;
+
+        if (parent) {
+            this.canvas_element.remove();
+            // this.canvas_element = this.canvas_element_original.cloneNode();
+            const clone = this.canvas_element_original.cloneNode(true);
+
+            parent?.append(clone);
+            this.canvas_element = document.getElementById(this.canvas_id) as HTMLCanvasElement;
+
+            this.canvas_context = this.canvas_element.getContext("2d") as CanvasRenderingContext2D;
+            this.canvas_width = this.canvas_element.width;
+            this.canvas_height = this.canvas_element.height;
+            this.camera_middle_screen.set(this.canvas_width / 2, this.canvas_height / 2);
+            this.canvas_element.style.backgroundColor = this.canvas_background;
+            // this.moveCameraOffsetToCenter();
+            this.setCartesianPlaneToFullScreen();
+            this.canvas_paint = new Paint(this);
+            this.setupEvents();
+        }
         return this;
     }
 
@@ -738,7 +771,7 @@ export default class MathWorld implements MathWorldContract {
     }
 
     // public onMouseWheel(callback: (e: MouseEvent) => void) {
-    public onMouseWheel(...callback: ((e: MouseEvent) => void)[]) {
+    public onMouseWheel(...callback: ((e: WheelEvent) => void)[]) {
         this.on_mouse_wheel.push(...callback);
     }
 
@@ -760,8 +793,11 @@ export default class MathWorld implements MathWorldContract {
     }
 
     private mouseWheelHandler(e: WheelEvent) {
-        this.adjustZoomAtMousePoint(e);
-        this.on_mouse_wheel.map((callback) => callback(e));
+        if (this.camera_is_zoomable && this.keyIsPressed(this.master_key)) {
+            this.adjustZoomAtMousePoint(e);
+        } else {
+            this.on_mouse_wheel.map((callback) => callback(e));
+        }
     }
 
     private mouseDownHandler(e: MouseEvent) {
@@ -771,20 +807,22 @@ export default class MathWorld implements MathWorldContract {
         if (this.camera_is_draggable && this.keyIsPressed(this.master_key)) {
             this.camera_is_dragging = true;
             this.camera_dragging_point.setX(e.x).setY(e.y);
+        } else {
+            if (e.button == 0 && this.on_left_click) this.on_left_click.map((callback) => callback(e));
+            if (e.button === 2 && this.on_right_click) this.on_right_click.map((callback) => callback(e));
+
+            this.on_mouse_down.map((callback) => callback(e));
         }
 
-        if (e.button == 0 && this.on_left_click) this.on_left_click.map((callback) => callback(e));
-        if (e.button === 2 && this.on_right_click) this.on_right_click.map((callback) => callback(e));
-
-        this.on_mouse_down.map((callback) => callback(e));
         return false;
     }
 
     private mouseUpHandler(e: MouseEvent) {
         if (this.camera_is_draggable) {
             this.camera_is_dragging = false;
+        } else {
+            this.on_mouse_up.map((callback) => callback(e));
         }
-        this.on_mouse_up.map((callback) => callback(e));
     }
 
     private mouseMoveHandler(e: MouseEvent) {
@@ -792,17 +830,16 @@ export default class MathWorld implements MathWorldContract {
             this.getCameraOffset().setX(this.getCameraOffset().getX() + e.clientX - this.camera_dragging_point.getX());
             this.getCameraOffset().setY(this.getCameraOffset().getY() + e.clientY - this.camera_dragging_point.getY());
             this.camera_dragging_point.setX(e.clientX).setY(e.clientY);
+        } else {
+            this.on_mouse_move.map((callback) => callback(e));
         }
-        this.on_mouse_move.map((callback) => callback(e));
     }
 
     private adjustZoomAtMousePoint(e: WheelEvent) {
-        if (this.camera_is_zoomable && this.keyIsPressed(this.master_key)) {
-            e.preventDefault();
-            const scale_factor = this.camera_zoom_factor / 100 + 1; // 10 / 100 + 1 = 1.1 = 110%
-            if (-e.deltaY > 0) this.zoomAtWithDecimal(scale_factor, this.getMousePositionInScreen());
-            else this.zoomAtWithDecimal(1 / scale_factor, this.getMousePositionInScreen());
-        }
+        e.preventDefault();
+        const scale_factor = this.camera_zoom_factor / 100 + 1; // 10 / 100 + 1 = 1.1 = 110%
+        if (-e.deltaY > 0) this.zoomAtWithDecimal(scale_factor, this.getMousePositionInScreen());
+        else this.zoomAtWithDecimal(1 / scale_factor, this.getMousePositionInScreen());
     }
 
     private calculateScreenOrigin(): void {
@@ -824,6 +861,18 @@ export default class MathWorld implements MathWorldContract {
         this.mouse_current_point_in_cartesian_plane.setY(this.mouse_current_point_in_world.getY() / this.getGridSize());
     }
 
+    private resizeScreen() {
+        if (this.canvas_fullscreen) {
+            this.setWidth(window.innerWidth).setHeight(window.innerHeight);
+        }
+    }
+
+    private hiddenScreen() {
+        if (document.hidden) {
+            this.pauseWorldTime();
+        }
+    }
+
     private setupEvents(): void {
         this.getCanvas().addEventListener("mousedown", (e) => this.mouseDownHandler(e));
         this.getCanvas().addEventListener("mousemove", (e) => this.mouseMoveHandler(e));
@@ -832,6 +881,8 @@ export default class MathWorld implements MathWorldContract {
         this.getCanvas().addEventListener("wheel", (e) => this.mouseWheelHandler(e));
         document.addEventListener("keyup", (e) => this.keyUpHandler(e));
         document.addEventListener("keydown", (e) => this.keyDownHandler(e));
+        document.addEventListener("visibilitychange", () => this.hiddenScreen());
+        window.addEventListener("resize", () => this.resizeScreen());
     }
 
     private update(timestamp = 0): void {

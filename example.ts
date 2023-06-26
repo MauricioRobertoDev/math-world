@@ -3,14 +3,13 @@ import { MathWorld, Vector2D } from "./src/main";
 const world = new MathWorld("app");
 
 world.default();
-world.setGridSize(450);
+world.setGridSize(540);
 world.setPositiveX(1);
 world.setPositiveY(1);
 world.setNegativeX(1);
 world.setNegativeY(1);
 world.enableWorldPrecisionTimeMode();
 world.pause();
-world.setWorldPrecisionTimeFrameInMiniTimes(250);
 // world.setWorldPrecisionTimeFrameInFraction(0.5);
 
 // world.setWorldPrecisionTimeFrameInMiniTime(2000);
@@ -21,13 +20,6 @@ const c = 1;
 const A = new Vector2D(0, 0);
 const B = new Vector2D(Math.cos(theta) * c, Math.sin(theta) * c);
 const C = new Vector2D(B.getX(), 0);
-
-document.onwheel = (event) => {
-    theta -= Math.sign(event.deltaY) * (Math.PI / 180);
-    B.setX(Math.cos(theta) * c);
-    B.setY(Math.sin(theta) * c);
-    C.setX(B.getX());
-};
 
 world.loop((world) => {
     const paint = world.getPaint();
@@ -63,6 +55,13 @@ world.loop((world) => {
 
 world.start();
 
+world.onMouseWheel((event) => {
+    theta -= Math.sign(event.deltaY) * (Math.PI / 180);
+    B.setX(Math.cos(theta) * c);
+    B.setY(Math.sin(theta) * c);
+    C.setX(B.getX());
+});
+
 function linearInterpolation(a: number, b: number, offset: number): number {
     return a * (1 - offset) + b * offset;
 }
@@ -85,6 +84,9 @@ function linearInterpolation2D(a: Vector2D, b: Vector2D, percentage: number): Ve
     (document.getElementById("back-frame") as HTMLButtonElement).addEventListener("click", () => world.backFrameWorldTime());
     (document.getElementById("next-frame") as HTMLButtonElement).addEventListener("click", () => world.nextFramwWorldTime());
     (document.getElementById("next-time") as HTMLButtonElement).addEventListener("click", () => world.nextWorldTime());
+
+    (document.getElementById("set-fullscreen") as HTMLButtonElement).addEventListener("click", () => world.setFullScreen());
+    (document.getElementById("reset-fullscreen") as HTMLButtonElement).addEventListener("click", () => world.resetFullScreen());
 })();
 
 // console.log(1000 % 2500);

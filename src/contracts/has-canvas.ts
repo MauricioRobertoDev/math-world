@@ -17,4 +17,5 @@ export default interface HasCanvas {
     setMaxFPS(fps: number): this;
     drawInformation(draw: boolean): this;
     setFullScreen(): this;
+    resetFullScreen(): this;
 }
