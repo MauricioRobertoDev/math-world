@@ -818,7 +818,7 @@ export default class MathWorld implements MathWorldContract {
     }
 
     private mouseUpHandler(e: MouseEvent) {
-        if (this.camera_is_draggable) {
+        if (this.camera_is_draggable && this.camera_is_dragging) {
             this.camera_is_dragging = false;
         } else {
             this.on_mouse_up.map((callback) => callback(e));

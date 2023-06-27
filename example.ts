@@ -89,4 +89,10 @@ function linearInterpolation2D(a: Vector2D, b: Vector2D, percentage: number): Ve
     (document.getElementById("reset-fullscreen") as HTMLButtonElement).addEventListener("click", () => world.resetFullScreen());
 })();
 
-// console.log(1000 % 2500);
+world.onMouseUp(() => {
+    console.log("mouseup");
+});
+
+world.onMouseDown(() => {
+    console.log("mousedown");
+});
