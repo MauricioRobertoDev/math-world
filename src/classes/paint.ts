@@ -30,7 +30,7 @@ export default class Paint implements PaintContract {
     }
 
     // arc
-    public arc({ point, radius, startAngle = 0, endAngle = Math.PI * 2, startAngleForHumans, endAngleForHumans, lineWidth = 1, strokeColor = "white", fillColor, clockwise = false, lineDash, rotate }: ArcDraw): this {
+    public arc({ point, radius, startAngle = 0, endAngle = Math.PI * 2, startAngleForHumans, endAngleForHumans, lineWidth = 1, strokeColor = "white", fillColor, clockwise = false, lineDash, rotate, lineToCenter }: ArcDraw): this {
         const ctx = this.world_math.getContext();
 
         point = this.getPointByDrawMode(point);
@@ -52,6 +52,7 @@ export default class Paint implements PaintContract {
         ctx.arc(point.x, point.y, radius, startAngle, endAngle, endAngleForHumans ? true : clockwise);
         ctx.strokeStyle = strokeColor;
         ctx.lineWidth = lineWidth;
+        if (lineToCenter) ctx.lineTo(point.x, point.y);
         ctx.stroke();
         if (fillColor) {
             ctx.fillStyle = fillColor;
@@ -65,7 +66,7 @@ export default class Paint implements PaintContract {
     }
 
     // circle
-    public circle({ point, radius, startAngle = 0, endAngle = Math.PI * 2, startAngleForHumans, endAngleForHumans, lineWidth = 1, strokeColor = "white", fillColor, clockwise = false, lineDash, rotate }: CircleDraw): this {
+    public circle({ point, radius, startAngle = 0, endAngle = Math.PI * 2, startAngleForHumans, endAngleForHumans, lineWidth = 1, strokeColor = "white", fillColor, clockwise = false, lineDash, rotate, lineToCenter }: CircleDraw): this {
         const ctx = this.world_math.getContext();
 
         point = this.getPointByDrawMode(point);
@@ -87,6 +88,7 @@ export default class Paint implements PaintContract {
         ctx.arc(point.x, point.y, radius, startAngle, endAngle, endAngleForHumans ? true : clockwise);
         ctx.strokeStyle = strokeColor;
         ctx.lineWidth = lineWidth;
+        if (lineToCenter) ctx.lineTo(point.x, point.y);
         ctx.stroke();
         if (fillColor) {
             ctx.fillStyle = fillColor;

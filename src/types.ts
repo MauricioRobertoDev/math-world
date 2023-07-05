@@ -21,6 +21,7 @@ export type ArcDraw = {
     fillColor?: string | CanvasGradient | CanvasPattern;
     lineDash?: number[];
     rotate?: number;
+    lineToCenter?: boolean;
 };
 
 export type CircleDraw = {
@@ -36,6 +37,7 @@ export type CircleDraw = {
     fillColor?: string | CanvasGradient | CanvasPattern;
     lineDash?: number[];
     rotate?: number;
+    lineToCenter?: boolean;
 };
 
 export type CapsuleDraw = {
