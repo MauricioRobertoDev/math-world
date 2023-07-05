@@ -1,6 +1,13 @@
 import { Point } from "../types";
 
-export default interface Vector2DContract extends Point {
+export default interface Vector2DContract {
+    /**
+     * Da um console.log nos valores X e Y do vetor
+     *
+     * @memberof Vector2DContract
+     */
+    log(): void;
+
     /**
      * Retorna o X do vetor
      *

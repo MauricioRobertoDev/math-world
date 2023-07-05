@@ -137,7 +137,7 @@ export default class Vector2D implements Vector2DContract {
         return `(${this._x.toFixed(fractionDigits)},${this._y.toFixed(fractionDigits)})`;
     }
 
-    public log() {
+    public log(): void {
         console.log("X -> " + this._x + "\n Y -> " + this._y);
     }
 
