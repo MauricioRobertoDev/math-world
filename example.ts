@@ -8,8 +8,8 @@ world.setPositiveX(1);
 world.setPositiveY(1);
 world.setNegativeX(1);
 world.setNegativeY(1);
-world.enableWorldPrecisionTimeMode();
-world.pause();
+// world.enableWorldPrecisionTimeMode();
+// world.pause();
 // world.setWorldPrecisionTimeFrameInFraction(0.5);
 
 // world.setWorldPrecisionTimeFrameInMiniTime(2000);
@@ -76,9 +76,11 @@ function linearInterpolation2D(a: Vector2D, b: Vector2D, percentage: number): Ve
 }
 
 (() => {
+    (document.getElementById("start") as HTMLButtonElement).addEventListener("click", () => world.start());
     (document.getElementById("play") as HTMLButtonElement).addEventListener("click", () => world.play());
     (document.getElementById("pause") as HTMLButtonElement).addEventListener("click", () => world.pause());
     (document.getElementById("reset") as HTMLButtonElement).addEventListener("click", () => world.reset());
+    (document.getElementById("stop") as HTMLButtonElement).addEventListener("click", () => world.stop());
 
     (document.getElementById("back-time") as HTMLButtonElement).addEventListener("click", () => world.backWoldTime());
     (document.getElementById("back-frame") as HTMLButtonElement).addEventListener("click", () => world.backFrameWorldTime());

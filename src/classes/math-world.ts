@@ -32,7 +32,6 @@ export default class MathWorld implements MathWorldContract {
     private world_time_precision_mode = false;
     private world_time_precision_frame = 1000;
     private world_time_precision_frame_delay = 1000;
-    // private world_time_precision_frame_last_update = 0;
 
     private canvas_id: string;
     private canvas_element: HTMLCanvasElement;
@@ -65,11 +64,11 @@ export default class MathWorld implements MathWorldContract {
 
     private math_world_loop: ((world: this) => void) | null = null;
 
-    private on_start: ((world: this) => void) | null = null;
-    private on_play: ((world: this) => void) | null = null;
-    private on_pause: ((world: this) => void) | null = null;
-    private on_reset: ((world: this) => void) | null = null;
-    private on_stop: ((world: this) => void) | null = null;
+    private on_start: ((world: this) => void)[] = [];
+    private on_play: ((world: this) => void)[] = [];
+    private on_pause: ((world: this) => void)[] = [];
+    private on_reset: ((world: this) => void)[] = [];
+    private on_stop: ((world: this) => void)[] = [];
 
     private on_key_down: { key: string; callbacks: ((e: KeyboardEvent) => void)[] }[] = [];
     private on_key_up: { key: string; callbacks: ((e: KeyboardEvent) => void)[] }[] = [];
@@ -99,37 +98,37 @@ export default class MathWorld implements MathWorldContract {
         this.moveCameraOffsetToCenter();
         this.setCartesianPlaneToFullScreen();
         this.canvas_paint = new Paint(this);
+        this.calculateScreenOrigin();
+        this.setupEvents();
     }
 
     // Math World
 
     public start(): void {
-        this.calculateScreenOrigin();
         this.canvasPlay();
-        this.setupEvents();
         this.update();
-        if (this.on_start) this.on_start(this);
+        this.on_start.map((callback) => callback(this));
     }
 
     public play(): void {
         this.playWorldTime();
-        if (this.on_play) this.on_play(this);
+        this.on_play.map((callback) => callback(this));
     }
 
     public pause(): void {
         this.pauseWorldTime();
-        if (this.on_pause) this.on_pause(this);
+        this.on_pause.map((callback) => callback(this));
     }
 
     public stop(): void {
         this.pauseWorldTime();
         this.canvasStop();
-        if (this.on_stop) this.on_stop(this);
+        this.on_stop.map((callback) => callback(this));
     }
 
     public reset(): void {
         this.resetWorldTime();
-        if (this.on_reset) this.on_reset(this);
+        this.on_reset.map((callback) => callback(this));
     }
 
     public loop(loop: (world: this) => void): void {
@@ -329,6 +328,7 @@ export default class MathWorld implements MathWorldContract {
 
     public playWorldTime(): this {
         this.world_time_is_paused = false;
+        this.world_last_timestamp = performance.now();
         return this;
     }
 
@@ -864,12 +864,17 @@ export default class MathWorld implements MathWorldContract {
     private resizeScreen() {
         if (this.canvas_fullscreen) {
             this.setWidth(window.innerWidth).setHeight(window.innerHeight);
+            this.calculateScreenOrigin();
         }
     }
 
     private hiddenScreen() {
         if (document.hidden) {
             this.pauseWorldTime();
+            this.pressed_keys = [];
+        } else {
+            this.playWorldTime();
+            this.pressed_keys = [];
         }
     }
 
@@ -887,28 +892,28 @@ export default class MathWorld implements MathWorldContract {
 
     private update(timestamp = 0): void {
         this.canvas_time = timestamp;
+        const current_time = performance.now();
 
-        if (this.canvasIsRunning()) requestAnimationFrame(this.update.bind(this));
+        if (!this.canvasIsRunning()) return;
 
         if (!this.world_time_is_paused) {
             if (this.world_time_precision_mode) {
-                if (timestamp - this.world_last_timestamp >= this.world_time_precision_frame_delay) {
+                if (current_time - this.world_last_timestamp >= this.world_time_precision_frame_delay) {
                     this.world_time += this.world_time_precision_frame;
-                    this.world_last_timestamp = timestamp;
                 }
             } else {
-                this.world_time += (timestamp - this.world_last_timestamp) * this.world_time_scale;
-                this.world_last_timestamp = timestamp;
+                this.world_time += (current_time - this.world_last_timestamp) * this.world_time_scale;
             }
         }
 
-        const current_frame_time = performance.now();
-        const elapsed = current_frame_time - this.canvas_last_frame_time;
+        this.world_last_timestamp = current_time;
+
+        const elapsed = current_time - this.canvas_last_frame_time;
 
         if (elapsed > this.canvas_fps_interval) {
             this.canvas_fps = Math.round(1000 / elapsed);
 
-            this.canvas_last_frame_time = current_frame_time;
+            this.canvas_last_frame_time = current_time;
 
             const ctx = this.getContext();
 
@@ -928,6 +933,8 @@ export default class MathWorld implements MathWorldContract {
 
             this.drawInfo();
         }
+
+        requestAnimationFrame(this.update.bind(this));
     }
 
     public toWorld(point: Vector2D | Point): Vector2D | Point {
@@ -946,29 +953,29 @@ export default class MathWorld implements MathWorldContract {
         return this.world_time_is_paused;
     }
 
-    public onStart(callback: (world: MathWorldContract) => void): this {
-        this.on_start = callback;
+    public onStart(...callback: ((world: MathWorldContract) => void)[]): this {
+        this.on_start.push(...callback);
         return this;
     }
 
-    public onPlay(callback: (world: MathWorldContract) => void): this {
-        this.on_play = callback;
+    public onPlay(...callback: ((world: MathWorldContract) => void)[]): this {
+        this.on_play.push(...callback);
         return this;
     }
 
-    public onPause(callback: (world: MathWorldContract) => void): this {
-        this.on_pause = callback;
+    public onPause(...callback: ((world: MathWorldContract) => void)[]): this {
+        this.on_pause.push(...callback);
         return this;
     }
 
-    public onReset(callback: (world: MathWorldContract) => void): this {
+    public onReset(...callback: ((world: MathWorldContract) => void)[]): this {
         this.resetWorldTime();
-        this.on_reset = callback;
+        this.on_reset.push(...callback);
         return this;
     }
 
-    public onStop(callback: (world: MathWorldContract) => void): this {
-        this.on_stop = callback;
+    public onStop(...callback: ((world: MathWorldContract) => void)[]): this {
+        this.on_stop.push(...callback);
         return this;
     }
 

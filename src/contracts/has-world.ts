@@ -27,6 +27,10 @@ export default interface HasWorld {
     setWorldPrecisionTimeInSecondsMinutesAndHours(seconds: number, minutes: number, hours: number): this;
 
     nextWorldTime(): this;
+
+    /**
+     * uma batatinha
+     */
     nextFramwWorldTime(): this;
     backWoldTime(): this;
     backFrameWorldTime(): this;
