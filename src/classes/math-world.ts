@@ -155,7 +155,7 @@ export default class MathWorld implements MathWorldContract {
         return this;
     }
 
-    // CAMERA
+    // * CAMERA
 
     public isDraggable(is = true): this {
         this.camera_is_draggable = is;
@@ -211,6 +211,10 @@ export default class MathWorld implements MathWorldContract {
 
     public getCameraZoomFactor(): number {
         return this.camera_zoom_factor;
+    }
+
+    public getCameraZoomFactorInDecimal(): number {
+        return this.camera_zoom_current / 100;
     }
 
     public setCameraZoomFactor(factor: number): this {

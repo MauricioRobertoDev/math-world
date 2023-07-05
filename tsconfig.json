@@ -24,5 +24,9 @@
         "outDir": "dist",
         "declarationMap": true
     },
+    "typedocOptions": {
+        "entryPoints": ["src/main.ts"],
+        "out": "docs"
+    },
     "include": ["src"]
 }
