@@ -1,6 +1,7 @@
+import Vector2DContract from "../contracts/vector2d-base";
 import { Point } from "../types";
 
-export default class Vector2D implements Point {
+export default class Vector2D implements Vector2DContract {
     private _x: number;
     private _y: number;
 
@@ -25,12 +26,12 @@ export default class Vector2D implements Point {
         return this._y;
     }
 
-    public setX(x: number): Vector2D {
+    public setX(x: number): this {
         this._x = x;
         return this;
     }
 
-    public setY(y: number): Vector2D {
+    public setY(y: number): this {
         this._y = y;
         return this;
     }
@@ -58,13 +59,13 @@ export default class Vector2D implements Point {
         return this;
     }
 
-    public add(value: Vector2D | Point): this {
+    public add(value: Vector2DContract | Point): this {
         this._x += value.x;
         this._y += value.y;
         return this;
     }
 
-    public sub(value: Vector2D | Point): this {
+    public sub(value: Vector2DContract | Point): this {
         this._x -= value.x;
         this._y -= value.y;
         return this;
@@ -80,7 +81,7 @@ export default class Vector2D implements Point {
         return this.mult(scalar);
     }
 
-    public scaled(scalar: number): Vector2D {
+    public scaled(scalar: number): Vector2DContract {
         return this.clone().scale(scalar);
     }
 
@@ -90,15 +91,15 @@ export default class Vector2D implements Point {
         return this;
     }
 
-    public dot(value: Vector2D | Point): number {
+    public dot(value: Vector2DContract | Point): number {
         return this._x * value.x + this._y * value.y;
     }
 
-    public normalized(): Vector2D {
+    public normalized(): Vector2DContract {
         return this.clone().normalize();
     }
 
-    public clone(): Vector2D {
+    public clone(): Vector2DContract {
         return new Vector2D(this._x, this._y);
     }
 
@@ -108,7 +109,7 @@ export default class Vector2D implements Point {
         return this;
     }
 
-    public rounded(): Vector2D {
+    public rounded(): Vector2DContract {
         return this.clone().round();
     }
 
@@ -118,11 +119,11 @@ export default class Vector2D implements Point {
         return this;
     }
 
-    public fixed(fractionDigits?: number | undefined): Vector2D {
+    public fixed(fractionDigits?: number | undefined): Vector2DContract {
         return this.clone().fix(fractionDigits);
     }
 
-    public isEqual(value: Vector2D | Point): boolean {
+    public isEqual(value: Vector2DContract | Point): boolean {
         return this._x === value.x && this._y === value.y;
     }
 
@@ -144,7 +145,11 @@ export default class Vector2D implements Point {
         return { x: this._x, y: this._y };
     }
 
-    public static fromPoint(point: Point): Vector2D {
+    public fromPoint(point: Point): Vector2DContract {
+        return new Vector2D(point.x, point.y);
+    }
+
+    public static fromPoint(point: Point): Vector2DContract {
         return new Vector2D(point.x, point.y);
     }
 }

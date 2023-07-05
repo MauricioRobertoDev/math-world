@@ -6,6 +6,8 @@ export type Point = { x: number; y: number };
 
 export type PaintDrawMode = "off" | "screen" | "world" | "cartesian";
 
+export type Key = { code: string; key: string };
+
 export type ArcDraw = {
     point: Vector2D | Point;
     radius: number;

@@ -1,9 +1,7 @@
 import MathWorldContract from "../contracts/math-world-base";
-import { DebugMouseMode, Point } from "../types";
+import { DebugMouseMode, Key, Point } from "../types";
 import Paint from "./paint";
 import Vector2D from "./vector-2d";
-
-type Key = { code: string; key: string };
 
 export default class MathWorld implements MathWorldContract {
     private camera_is_zoomable = true;
@@ -155,6 +153,28 @@ export default class MathWorld implements MathWorldContract {
         return this;
     }
 
+    public isPaused(): boolean {
+        return this.world_time_is_paused;
+    }
+
+    public toScreen(point: Vector2D | Point): Vector2D | Point {
+        const realPoint = { x: (point.x - this.getCameraOffset().getX()) / this.getCameraZoomInDecimal(), y: (point.y - this.getCameraOffset().getY()) / this.getCameraZoomInDecimal() };
+        if (point instanceof Vector2D) return Vector2D.fromPoint(realPoint);
+        return realPoint;
+    }
+
+    public toWorld(point: Vector2D | Point): Vector2D | Point {
+        const realPoint = { x: point.x, y: -point.y };
+        if (point instanceof Vector2D) return Vector2D.fromPoint(realPoint);
+        return realPoint;
+    }
+
+    public toCartesian(point: Vector2D | Point): Vector2D | Point {
+        const realPoint = { x: point.x * this.getGridSize(), y: point.y * -this.getGridSize() };
+        if (point instanceof Vector2D) return Vector2D.fromPoint(realPoint);
+        return realPoint;
+    }
+
     // * CAMERA
 
     public isDraggable(is = true): this {
@@ -265,7 +285,45 @@ export default class MathWorld implements MathWorldContract {
         return this;
     }
 
-    // POINTER
+    public getCameraZoomInDecimal(): number {
+        return this.camera_zoom_current / 100;
+    }
+
+    public setCameraZoom(amount: number): this {
+        if (!this.camera_is_dragging) {
+            if (amount < this.camera_zoom_min || amount > this.camera_zoom_max) {
+                throw new Error(`O zoom deve estar entre o mínimo: ${this.camera_zoom_min}% e o máximo: ${this.camera_zoom_max}%.`);
+            }
+
+            this.camera_zoom_current = amount;
+            this.getCameraOffset().setX(this.getCameraOffset().getX());
+            this.getCameraOffset().setY(this.getCameraOffset().getY());
+        }
+
+        return this;
+    }
+
+    private zoomAtWithDecimal(decimalAmount: number, point: Vector2D | Point) {
+        if (!this.camera_is_dragging) {
+            let newZoom = this.camera_zoom_current * decimalAmount;
+
+            if (newZoom > this.camera_zoom_max) {
+                decimalAmount = this.camera_zoom_max / this.camera_zoom_current;
+                newZoom = this.camera_zoom_current * decimalAmount;
+            }
+
+            if (newZoom < this.camera_zoom_min) {
+                decimalAmount = this.camera_zoom_min / this.camera_zoom_current;
+                newZoom = this.camera_zoom_current * decimalAmount;
+            }
+
+            this.camera_zoom_current = newZoom;
+            this.getCameraOffset().setX(point.x - (point.x - this.getCameraOffset().getX()) * decimalAmount);
+            this.getCameraOffset().setY(point.y - (point.y - this.getCameraOffset().getY()) * decimalAmount);
+        }
+    }
+
+    // * HAS POINTER
     public getMousePosition(): Vector2D {
         return this.mouse_current_point;
     }
@@ -291,7 +349,8 @@ export default class MathWorld implements MathWorldContract {
         return this.mouse_debug_mode;
     }
 
-    // WORLD
+    // * WORLD
+
     public getWorldTime(): number {
         return this.getWorldTimeInTicks();
     }
@@ -336,7 +395,106 @@ export default class MathWorld implements MathWorldContract {
         return this;
     }
 
-    // CANVAS
+    public worldTimeInMiniTimesIs(time: number): boolean {
+        return this.getWorldInMiniTimes() >= time && this.getWorldInMiniTimes() < time + this.world_time_tolerance;
+    }
+
+    public worldTimeInTicksIs(time: number): boolean {
+        return this.getWorldTimeInTicks() >= time && this.getWorldTimeInTicks() < time + this.world_time_tolerance;
+    }
+
+    public worldTimeIs(time: number, tolerance = false): boolean {
+        if (tolerance) return this.getWorldTime() >= time && this.getWorldTime() < time + this.world_time_tolerance;
+        return this.getWorldTime() === time;
+    }
+
+    public setWorldTimeTolerance(time: number): this {
+        this.world_time_tolerance = time;
+        return this;
+    }
+
+    public enableWorldPrecisionTimeMode(): this {
+        this.world_time_precision_mode = true;
+        this.world_time = 0;
+        return this;
+    }
+
+    public disableWorldPrecisionTimeMode(): this {
+        this.world_time_precision_mode = false;
+        this.world_time = 0;
+        return this;
+    }
+
+    public setWorldPrecisionTimeFrameInFraction(fraction: number): this {
+        if (this.world_time_precision_mode) {
+            if (100 % fraction > 0) throw new Error("A fração de tempo deve ser um número que seja divisor perfeito de 100");
+            this.world_time_precision_frame = 1000 * fraction;
+        }
+
+        return this;
+    }
+
+    public getWorldPrecisionTimeFrameInFraction(): number {
+        return 1000 / this.world_time_precision_frame;
+    }
+
+    public getWorldPrecisionTimeFrameInMiniTime(): number {
+        return this.world_time_precision_frame;
+    }
+
+    public setWorldPrecisionTimeFrameInMiniTimes(minitimes: number): this {
+        this.world_time_precision_frame = minitimes;
+        return this;
+    }
+
+    public setWorldPrecisionTimeFrameDelay(seconds: number): this {
+        this.world_time_precision_frame_delay = seconds * 1000;
+        return this;
+    }
+
+    public nextWorldTime(): this {
+        this.world_time = (Math.floor(this.world_time / 1000) + 1) * 1000;
+        return this;
+    }
+
+    public nextFrameWorldTime(): this {
+        this.world_time += this.world_time_precision_frame;
+        return this;
+    }
+
+    public backWoldTime(): this {
+        const newTime = (this.world_time = (Math.ceil(this.world_time / 1000) - 1) * 1000);
+        this.world_time = newTime > 0 ? newTime : 0;
+        return this;
+    }
+
+    public backFrameWorldTime(): this {
+        const newTime = this.world_time - this.world_time_precision_frame;
+        this.world_time = newTime > 0 ? newTime : 0;
+        return this;
+    }
+
+    public setWorldPrecisionTimeInMinitimes(minitimes: number): this {
+        this.world_time = minitimes;
+        return this;
+    }
+
+    public setWorldPrecisionTimeInSecondsMinutesAndHours(seconds: number, minutes = 0, hours = 0): this {
+        let minitimes = 0;
+
+        minitimes += seconds * 1000;
+        minitimes += minutes * 60 * 1000;
+        minitimes += hours * 60 * 60 * 1000;
+
+        this.world_time = minitimes;
+        return this;
+    }
+
+    public getWorldInMiniTimes(): number {
+        return this.world_time;
+    }
+
+    // * CANVAS
 
     public getWidth(): number {
         return this.canvas_width;
@@ -457,7 +615,7 @@ export default class MathWorld implements MathWorldContract {
         return this;
     }
 
-    // CARTESIAN PLANE
+    // * CARTESIAN PLANE
 
     public getGridSize(): number {
         return this.cartesian_plane_grid_size;
@@ -539,43 +697,89 @@ export default class MathWorld implements MathWorldContract {
         return this;
     }
 
-    public getCameraZoomInDecimal(): number {
-        return this.camera_zoom_current / 100;
-    }
+    // * Has Events
 
-    public setCameraZoom(amount: number): this {
-        if (!this.camera_is_dragging) {
-            if (amount < this.camera_zoom_min || amount > this.camera_zoom_max) {
-                throw new Error(`O zoom deve estar entre o mínimo: ${this.camera_zoom_min}% e o máximo: ${this.camera_zoom_max}%.`);
-            }
-
-            this.camera_zoom_current = amount;
-            this.getCameraOffset().setX(this.getCameraOffset().getX());
-            this.getCameraOffset().setY(this.getCameraOffset().getY());
-        }
-
+    public onStart(...callback: ((world: MathWorldContract) => void)[]): this {
+        this.on_start.push(...callback);
         return this;
     }
 
-    private zoomAtWithDecimal(decimalAmount: number, point: Vector2D | Point) {
-        if (!this.camera_is_dragging) {
-            let newZoom = this.camera_zoom_current * decimalAmount;
-
-            if (newZoom > this.camera_zoom_max) {
-                decimalAmount = this.camera_zoom_max / this.camera_zoom_current;
-                newZoom = this.camera_zoom_current * decimalAmount;
-            }
-
-            if (newZoom < this.camera_zoom_min) {
-                decimalAmount = this.camera_zoom_min / this.camera_zoom_current;
-                newZoom = this.camera_zoom_current * decimalAmount;
-            }
-
-            this.camera_zoom_current = newZoom;
-            this.getCameraOffset().setX(point.x - (point.x - this.getCameraOffset().getX()) * decimalAmount);
-            this.getCameraOffset().setY(point.y - (point.y - this.getCameraOffset().getY()) * decimalAmount);
-        }
+    public onPlay(...callback: ((world: MathWorldContract) => void)[]): this {
+        this.on_play.push(...callback);
+        return this;
     }
+
+    public onPause(...callback: ((world: MathWorldContract) => void)[]): this {
+        this.on_pause.push(...callback);
+        return this;
+    }
+
+    public onReset(...callback: ((world: MathWorldContract) => void)[]): this {
+        this.resetWorldTime();
+        this.on_reset.push(...callback);
+        return this;
+    }
+
+    public onStop(...callback: ((world: MathWorldContract) => void)[]): this {
+        this.on_stop.push(...callback);
+        return this;
+    }
+
+    // * Has Mouse And Keyboard
+
+    public onKeyUp(key: string, ...callback: ((e: KeyboardEvent) => void)[]): this {
+        const keyAndCallbacks = this.on_key_up.find((k) => k.key === key);
+        if (keyAndCallbacks) keyAndCallbacks.callbacks.push(...callback);
+        if (!keyAndCallbacks) this.on_key_up.push({ key, callbacks: callback });
+        return this;
+    }
+
+    public onKeyDown(key: string, ...callback: ((e: KeyboardEvent) => void)[]): this {
+        const keyAndCallbacks = this.on_key_down.find((k) => k.key === key);
+        if (keyAndCallbacks) keyAndCallbacks.callbacks.push(...callback);
+        if (!keyAndCallbacks) this.on_key_down.push({ key, callbacks: callback });
+        return this;
+    }
+
+    public onLeftCLick(...callback: ((e: MouseEvent) => void)[]): this {
+        this.on_left_click.push(...callback);
+        return this;
+    }
+
+    public onRightClick(...callback: ((e: MouseEvent) => void)[]): this {
+        this.on_right_click.push(...callback);
+        return this;
+    }
+
+    public onMouseMove(...callback: ((e: MouseEvent) => void)[]): this {
+        this.on_mouse_move.push(...callback);
+        return this;
+    }
+
+    public onMouseUp(...callback: ((e: MouseEvent) => void)[]): this {
+        this.on_mouse_up.push(...callback);
+        return this;
+    }
+
+    public onMouseDown(...callback: ((e: MouseEvent) => void)[]): this {
+        this.on_mouse_down.push(...callback);
+        return this;
+    }
+
+    public onMouseWheel(...callback: ((e: WheelEvent) => void)[]): this {
+        this.on_mouse_wheel.push(...callback);
+        return this;
+    }
+
+    public getPressedKeys(): Key[] {
+        return this.pressed_keys;
+    }
+
+    public keyIsPressed(key: string): boolean {
+        return this.pressed_keys.find((k) => k.key === key || k.code === key) ? true : false;
+    }
+
+    // PRIVATE
 
     private drawCartesianPlan() {
         // número de linhas horizontais e verticais que o espaço terá
@@ -733,53 +937,6 @@ export default class MathWorld implements MathWorldContract {
         ctx.closePath();
         ctx.restore();
     }
-
-    public getPressedKeys(): Key[] {
-        return this.pressed_keys;
-    }
-
-    public keyIsPressed(key: string): boolean {
-        return this.pressed_keys.find((k) => k.key === key || k.code === key) ? true : false;
-    }
-
-    public onKeyUp(key: string, ...callback: ((e: KeyboardEvent) => void)[]) {
-        const keyAndCallbacks = this.on_key_up.find((k) => k.key === key);
-        if (keyAndCallbacks) keyAndCallbacks.callbacks.push(...callback);
-        if (!keyAndCallbacks) this.on_key_up.push({ key, callbacks: callback });
-    }
-
-    public onKeyDown(key: string, ...callback: ((e: KeyboardEvent) => void)[]) {
-        const keyAndCallbacks = this.on_key_down.find((k) => k.key === key);
-        if (keyAndCallbacks) keyAndCallbacks.callbacks.push(...callback);
-        if (!keyAndCallbacks) this.on_key_down.push({ key, callbacks: callback });
-    }
-
-    public onLeftCLick(...callback: ((e: MouseEvent) => void)[]) {
-        this.on_left_click.push(...callback);
-    }
-
-    public onRightClick(...callback: ((e: MouseEvent) => void)[]) {
-        this.on_right_click.push(...callback);
-    }
-
-    public onMouseMove(...callback: ((e: MouseEvent) => void)[]) {
-        this.on_mouse_move.push(...callback);
-    }
-
-    public onMouseUp(...callback: ((e: MouseEvent) => void)[]) {
-        this.on_mouse_up.push(...callback);
-    }
-
-    public onMouseDown(...callback: ((e: MouseEvent) => void)[]) {
-        this.on_mouse_down.push(...callback);
-    }
-
-    // public onMouseWheel(callback: (e: MouseEvent) => void) {
-    public onMouseWheel(...callback: ((e: WheelEvent) => void)[]) {
-        this.on_mouse_wheel.push(...callback);
-    }
-
-    //SETUP
 
     private keyUpHandler(e: KeyboardEvent) {
         const index = this.pressed_keys.indexOf({ key: e.key, code: e.code });
@@ -939,157 +1096,5 @@ export default class MathWorld implements MathWorldContract {
         }
 
         requestAnimationFrame(this.update.bind(this));
-    }
-
-    public toWorld(point: Vector2D | Point): Vector2D | Point {
-        const realPoint = { x: point.x, y: -point.y };
-        if (point instanceof Vector2D) return Vector2D.fromPoint(realPoint);
-        return realPoint;
-    }
-
-    public toCartesian(point: Vector2D | Point): Vector2D | Point {
-        const realPoint = { x: point.x * this.getGridSize(), y: point.y * -this.getGridSize() };
-        if (point instanceof Vector2D) return Vector2D.fromPoint(realPoint);
-        return realPoint;
-    }
-
-    public isPaused(): boolean {
-        return this.world_time_is_paused;
-    }
-
-    public onStart(...callback: ((world: MathWorldContract) => void)[]): this {
-        this.on_start.push(...callback);
-        return this;
-    }
-
-    public onPlay(...callback: ((world: MathWorldContract) => void)[]): this {
-        this.on_play.push(...callback);
-        return this;
-    }
-
-    public onPause(...callback: ((world: MathWorldContract) => void)[]): this {
-        this.on_pause.push(...callback);
-        return this;
-    }
-
-    public onReset(...callback: ((world: MathWorldContract) => void)[]): this {
-        this.resetWorldTime();
-        this.on_reset.push(...callback);
-        return this;
-    }
-
-    public onStop(...callback: ((world: MathWorldContract) => void)[]): this {
-        this.on_stop.push(...callback);
-        return this;
-    }
-
-    public worldTimeInMiniTimesIs(time: number): boolean {
-        return this.getWorldInMiniTimes() >= time && this.getWorldInMiniTimes() < time + this.world_time_tolerance;
-    }
-
-    public worldTimeInTicksIs(time: number): boolean {
-        return this.getWorldTimeInTicks() >= time && this.getWorldTimeInTicks() < time + this.world_time_tolerance;
-    }
-
-    public worldTimeIs(time: number, tolerance = false): boolean {
-        if (tolerance) return this.getWorldTime() >= time && this.getWorldTime() < time + this.world_time_tolerance;
-        return this.getWorldTime() === time;
-    }
-
-    public setWorldTimeTolerance(time: number): this {
-        this.world_time_tolerance = time;
-        return this;
-    }
-
-    public enableWorldPrecisionTimeMode(): this {
-        this.world_time_precision_mode = true;
-        this.world_time = 0;
-        return this;
-    }
-
-    public disableWorldPrecisionTimeMode(): this {
-        this.world_time_precision_mode = false;
-        this.world_time = 0;
-        return this;
-    }
-
-    /**
-     * a fração é deve ser um número represantando uma porcentagem onde 1 equivale a 1 tempo por frame.
-     */
-    public setWorldPrecisionTimeFrameInFraction(fraction: number): this {
-        if (this.world_time_precision_mode) {
-            if (100 % fraction > 0) throw new Error("A fração de tempo deve ser um número que seja divisor perfeito de 100");
-            this.world_time_precision_frame = 1000 * fraction;
-        }
-
-        return this;
-    }
-
-    public getWorldPrecisionTimeFrameInFraction(): number {
-        return 1000 / this.world_time_precision_frame;
-    }
-
-    /**
-     * 1 tempo é igual a 1000 minitimes
-     */
-    public getWorldPrecisionTimeFrameInMiniTime(): number {
-        return this.world_time_precision_frame;
-    }
-
-    /**
-     * 1 time é igual a 1000 minitimes
-     *
-     * Você pode setar livremente a quantidade porèm lembre-se que a cada loop será adicionado esse número ao tempo então dê preferências a números divisores perfeitos de 1000, para facilitar as suas contas
-     */
-    public setWorldPrecisionTimeFrameInMiniTimes(minitimes: number): this {
-        this.world_time_precision_frame = minitimes;
-        return this;
-    }
-
-    public setWorldPrecisionTimeFrameDelay(seconds: number): this {
-        this.world_time_precision_frame_delay = seconds * 1000;
-        return this;
-    }
-
-    public nextWorldTime(): this {
-        this.world_time = (Math.floor(this.world_time / 1000) + 1) * 1000;
-        return this;
-    }
-
-    public nextFramwWorldTime(): this {
-        this.world_time += this.world_time_precision_frame;
-        return this;
-    }
-
-    public backWoldTime(): this {
-        const newTime = (this.world_time = (Math.ceil(this.world_time / 1000) - 1) * 1000);
-        this.world_time = newTime > 0 ? newTime : 0;
-        return this;
-    }
-
-    public backFrameWorldTime(): this {
-        const newTime = this.world_time - this.world_time_precision_frame;
-        this.world_time = newTime > 0 ? newTime : 0;
-        return this;
-    }
-
-    public setWorldPrecisionTimeInMinitimes(minitimes: number): this {
-        this.world_time = minitimes;
-        return this;
-    }
-
-    public setWorldPrecisionTimeInSecondsMinutesAndHours(seconds: number, minutes = 0, hours = 0): this {
-        let minitimes = 0;
-
-        minitimes += seconds * 1000;
-        minitimes += minutes * 60 * 1000;
-        minitimes += hours * 60 * 60 * 1000;
-
-        this.world_time = minitimes;
-        return this;
-    }
-
-    public getWorldInMiniTimes(): number {
-        return this.world_time;
     }
 }

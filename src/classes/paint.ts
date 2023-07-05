@@ -1,14 +1,15 @@
 import { TAILWIND_COLORS } from "../constants/tailwindcss";
 import MathWorldContract from "../contracts/math-world-base";
+import PaintContract from "../contracts/paint-base";
 import { ArcDraw, CapsuleDraw, CircleDraw, LineDraw, PaintDrawMode, Point, PointDraw, RectDraw, TailwindColorName, TailwindColorValue, TextDraw } from "../types";
 import Vector2D from "./vector-2d";
 
-export default class Paint {
+export default class Paint implements PaintContract {
     private draw_mode: PaintDrawMode = "off";
 
     constructor(private world_math: MathWorldContract) {}
 
-    public mode(draw_mode: PaintDrawMode) {
+    public mode(draw_mode: PaintDrawMode): void {
         this.draw_mode = draw_mode;
     }
 
@@ -34,13 +35,13 @@ export default class Paint {
 
         point = this.getPointByDrawMode(point);
         radius = this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius;
-        startAngle = startAngleForHumans ? -angleInRadians(startAngleForHumans) : startAngle;
-        endAngle = endAngleForHumans ? -angleInRadians(endAngleForHumans) : endAngle;
+        startAngle = startAngleForHumans ? -this.angleInRadians(startAngleForHumans) : startAngle;
+        endAngle = endAngleForHumans ? -this.angleInRadians(endAngleForHumans) : endAngle;
 
+        if (this.draw_mode === "screen" || rotate) ctx.save();
         if (this.draw_mode === "screen") ctx.resetTransform();
 
         if (rotate) {
-            ctx.save();
             ctx.translate(point.x, point.y);
             ctx.rotate(rotate);
             ctx.translate(-point.x, -point.y);
@@ -58,7 +59,7 @@ export default class Paint {
         }
         if (lineDash) ctx.setLineDash([]);
         ctx.closePath();
-        if (rotate) ctx.restore();
+        if (this.draw_mode === "screen" || rotate) ctx.restore();
 
         return this;
     }
@@ -69,13 +70,13 @@ export default class Paint {
 
         point = this.getPointByDrawMode(point);
         radius = this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius;
-        startAngle = startAngleForHumans ? -angleInRadians(startAngleForHumans) : startAngle;
-        endAngle = endAngleForHumans ? -angleInRadians(endAngleForHumans) : endAngle;
+        startAngle = startAngleForHumans ? -this.angleInRadians(startAngleForHumans) : startAngle;
+        endAngle = endAngleForHumans ? -this.angleInRadians(endAngleForHumans) : endAngle;
 
+        if (this.draw_mode === "screen" || rotate) ctx.save();
         if (this.draw_mode === "screen") ctx.resetTransform();
 
         if (rotate) {
-            ctx.save();
             ctx.translate(point.x, point.y);
             ctx.rotate(rotate);
             ctx.translate(-point.x, -point.y);
@@ -93,7 +94,7 @@ export default class Paint {
         }
         if (lineDash) ctx.setLineDash([]);
         ctx.closePath();
-        if (rotate) ctx.restore();
+        if (this.draw_mode === "screen" || rotate) ctx.restore();
 
         return this;
     }
@@ -107,10 +108,10 @@ export default class Paint {
         const angleRadians = Math.atan2(end.y - start.y, end.x - start.x);
         const ctx = this.world_math.getContext();
 
+        if (this.draw_mode === "screen" || rotate) ctx.save();
         if (this.draw_mode === "screen") ctx.resetTransform();
 
         if (rotate) {
-            ctx.save();
             ctx.translate(center.x, center.y);
             ctx.rotate(rotate);
             ctx.translate(-center.x, -center.y);
@@ -139,7 +140,7 @@ export default class Paint {
         }
         if (lineDash) ctx.setLineDash([]);
         ctx.closePath();
-        if (rotate) ctx.restore();
+        if (this.draw_mode === "screen" || rotate) ctx.restore();
 
         return this;
     }
@@ -151,6 +152,7 @@ export default class Paint {
         startPoint = this.getPointByDrawMode(startPoint);
         endPoint = this.getPointByDrawMode(endPoint);
 
+        if (this.draw_mode === "screen" || rotate || rotateInCenter) ctx.save();
         if (this.draw_mode === "screen") ctx.resetTransform();
 
         if (rotateInCenter) {
@@ -178,7 +180,7 @@ export default class Paint {
         ctx.stroke();
         if (lineDash) ctx.setLineDash([]);
         ctx.closePath();
-        if (rotate || rotateInCenter) ctx.restore();
+        if (this.draw_mode === "screen" || rotate || rotateInCenter) ctx.restore();
 
         return this;
     }
@@ -189,10 +191,10 @@ export default class Paint {
 
         point = this.getPointByDrawMode(point);
 
+        if (this.draw_mode === "screen" || rotate) ctx.save();
         if (this.draw_mode === "screen") ctx.resetTransform();
 
         if (rotate) {
-            ctx.save();
             ctx.translate(point.x, point.y);
             ctx.rotate(rotate);
             ctx.translate(-point.x, -point.y);
@@ -211,9 +213,7 @@ export default class Paint {
         ctx.fillText(text, point.x, point.y);
         ctx.closePath();
 
-        if (rotate) {
-            ctx.restore();
-        }
+        if (this.draw_mode === "screen" || rotate) ctx.restore();
 
         return this;
     }
@@ -225,6 +225,7 @@ export default class Paint {
         radius = this.draw_mode === "cartesian" ? radius * this.world_math.getGridSize() : radius;
         point = this.getPointByDrawMode(point);
 
+        if (this.draw_mode === "screen" || rotate) ctx.save();
         if (this.draw_mode === "screen") ctx.resetTransform();
 
         if (rotate) {
@@ -251,7 +252,7 @@ export default class Paint {
         }
         if (lineDash) ctx.setLineDash([]);
         ctx.closePath();
-        if (rotate) ctx.restore();
+        if (this.draw_mode === "screen" || rotate) ctx.restore();
 
         return this;
     }
@@ -264,6 +265,7 @@ export default class Paint {
         width = this.draw_mode === "cartesian" ? width * this.world_math.getGridSize() : width;
         height = this.draw_mode === "cartesian" ? height * this.world_math.getGridSize() : height;
 
+        if (this.draw_mode === "screen" || rotate || rotateInCenter) ctx.save();
         if (this.draw_mode === "screen") ctx.resetTransform();
 
         if (rotateInCenter) {
@@ -290,12 +292,12 @@ export default class Paint {
         }
         if (lineDash) ctx.setLineDash([]);
         ctx.closePath();
-        if (rotate || rotateInCenter) ctx.restore();
+        if (this.draw_mode === "screen" || rotate || rotateInCenter) ctx.restore();
 
         return this;
     }
 
-    public getPointByDrawMode(point: Point): Point {
+    public getPointByDrawMode(point: Vector2D | Point): Vector2D | Point {
         if (this.draw_mode === "off" || this.draw_mode === "screen") return point;
         if (this.draw_mode === "cartesian") return this.world_math.toCartesian(point);
         if (this.draw_mode === "world") return this.world_math.toWorld(point);
@@ -310,8 +312,12 @@ export default class Paint {
 
         return `rgba(${color[0]},${color[1]},${color[2]},${opacity})`;
     }
-}
 
-function angleInRadians(degrees: number): number {
-    return degrees * (Math.PI / 180);
+    public angleInRadians(degrees: number): number {
+        return degrees * (Math.PI / 180);
+    }
+
+    public angleInRadians360(degrees: number): number {
+        return degrees * (Math.PI / 360);
+    }
 }

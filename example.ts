@@ -84,7 +84,7 @@ function linearInterpolation2D(a: Vector2D, b: Vector2D, percentage: number): Ve
 
     (document.getElementById("back-time") as HTMLButtonElement).addEventListener("click", () => world.backWoldTime());
     (document.getElementById("back-frame") as HTMLButtonElement).addEventListener("click", () => world.backFrameWorldTime());
-    (document.getElementById("next-frame") as HTMLButtonElement).addEventListener("click", () => world.nextFramwWorldTime());
+    (document.getElementById("next-frame") as HTMLButtonElement).addEventListener("click", () => world.nextFrameWorldTime());
     (document.getElementById("next-time") as HTMLButtonElement).addEventListener("click", () => world.nextWorldTime());
 
     (document.getElementById("set-fullscreen") as HTMLButtonElement).addEventListener("click", () => world.setFullScreen());
